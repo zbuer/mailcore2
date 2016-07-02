@@ -19,7 +19,6 @@
 
 @class MCOIMAPFolderInfo;
 
-NS_ASSUME_NONNULL_BEGIN
 @interface MCOIMAPFolderInfoOperation : MCOIMAPBaseOperation
 
 /** 
@@ -33,9 +32,8 @@ NS_ASSUME_NONNULL_BEGIN
    error code available in `MCOConstants.h`, `info` will be nil
 */
 
-- (void) start:(void (^)(NSError * __nullable error, MCOIMAPFolderInfo * __nullable info))completionBlock;
+- (void) start:(void (^)(NSError * error, MCOIMAPFolderInfo * info))completionBlock;
 
 @end
-NS_ASSUME_NONNULL_END
 
 #endif

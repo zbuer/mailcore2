@@ -14,7 +14,6 @@
 
 #import <MailCore/MCOIMAPBaseOperation.h>
 
-NS_ASSUME_NONNULL_BEGIN
 @interface MCOIMAPFetchFoldersOperation : MCOIMAPBaseOperation
 
 /** 
@@ -27,9 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
  - On failure, `error` will be set with `MCOErrorDomain` as domain and an 
    error code available in `MCOConstants.h`, `folders` will be nil
 */
-- (void) start:(void (^)(NSError * __nullable error, NSArray * /* MCOIMAPFolder */ __nullable folders))completionBlock;
+- (void) start:(void (^)(NSError * error, NSArray * /* MCOIMAPFolder */ folders))completionBlock;
 
 @end
-NS_ASSUME_NONNULL_END
 
 #endif

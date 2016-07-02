@@ -12,7 +12,7 @@
 
 #import "MCOCIDURLProtocol.h"
 
-@interface MCOMessageView () <MCOHTMLRendererIMAPDelegate, WebResourceLoadDelegate>
+@interface MCOMessageView () <MCOHTMLRendererIMAPDelegate>
 
 @end
 

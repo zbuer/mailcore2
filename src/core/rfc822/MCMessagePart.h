@@ -13,18 +13,10 @@ namespace mailcore {
     public:
         MessagePart();
         virtual ~MessagePart();
-
-        virtual void setPartID(String * partID);
-        virtual String * partID();
-
+        
     public: // subclass behavior
         MessagePart(MessagePart * other);
         virtual Object * copy();
-
-    private:
-        String * mPartID;
-
-        void init();
     };
     
 }

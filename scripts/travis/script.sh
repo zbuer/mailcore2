@@ -1,13 +1,9 @@
 #!/bin/sh
 set -e
 
-IOSSDK="`xcodebuild -showsdks 2>/dev/null | grep iphoneos | sed 's/.*iphoneos\(.*\)/\1/'`"
-OSXSDK="`xcodebuild -showsdks 2>/dev/null | grep macosx | sed 's/.*macosx\(.*\)/\1/'`"
-IPHONESDK=iphoneos$IOSSDK
-SIMULATORSDK=iphonesimulator$IOSSDK
-MACSDK=macosx$OSXSDK
-
-export TZ=PST8PDT
+IPHONESDK=iphoneos8.1
+SIMULATORSDK=iphonesimulator8.1
+MACSDK=macosx10.10
 
 echo Operating system:
 uname
@@ -46,4 +42,5 @@ cd build-cmake
 cmake ..
 make
 cd unittest
+export TZ=PST8PDT
 ./unittestcpp ../../unittest/data

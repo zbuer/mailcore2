@@ -21,7 +21,7 @@ void * mailcore::getHandle(JNIEnv * env, jobject obj)
 
 void mailcore::setHandle(JNIEnv *env, jobject obj, void *t)
 {
-    jlong handle = (jlong) t;
+    jlong handle = reinterpret_cast<jlong>(t);
     env->SetLongField(obj, getHandleField(env, obj), handle);
 }
 

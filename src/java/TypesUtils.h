@@ -105,10 +105,8 @@
     static jobject objectToJavaConverter(JNIEnv * env, Object * obj) \
     { \
         jclass cls = env->FindClass("com/libmailcore/" mc_expand_and_quote(javaType)); \
-        jmethodID constructor = env->GetMethodID(cls, "<init>", "()V"); \
-        jobject javaObject = env->NewObject(cls, constructor); \
-        jmethodID initMethod = env->GetMethodID(cls, "initWithNative", "(J)V"); \
-        env->CallVoidMethod(javaObject, initMethod, (jlong) obj); \
+        jmethodID constructor = env->GetMethodID(cls, "initWithNative", "(J)V"); \
+        jobject javaObject = env->NewObject(cls, constructor, obj); \
         return javaObject; \
     } \
     \
@@ -123,6 +121,9 @@ namespace mailcore {
     
     Object * javaToMCObject(JNIEnv * env, jobject obj);
     jobject mcObjectToJava(JNIEnv * env, Object * obj);
+    
+    Range javaToRange(JNIEnv * env, jobject range);
+    jobject rangeToJava(JNIEnv * env, Range range);
     
     jobject errorToJava(int errorCode);
     

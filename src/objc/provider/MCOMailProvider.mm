@@ -39,7 +39,7 @@
     return [[[self alloc] initWithMCProvider:provider] autorelease];
 }
 
-- (instancetype) initWithInfo:(NSDictionary *)info
+- (id) initWithInfo:(NSDictionary *)info
 {
     self = [super init];
     
@@ -49,7 +49,7 @@
     return self;
 }
 
-- (instancetype) initWithMCProvider:(mailcore::MailProvider *)provider
+- (id) initWithMCProvider:(mailcore::MailProvider *)provider
 {
     self = [super init];
     

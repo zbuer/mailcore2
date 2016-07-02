@@ -12,7 +12,6 @@
 
 #import "MCOUtils.h"
 #import "MCOOperation+Private.h"
-#import "MCOSMTPOperation+Private.h"
 
 #define nativeType mailcore::SMTPOperation
 
@@ -62,7 +61,7 @@ private:
     return [[[self alloc] initWithMCOperation:op] autorelease];
 }
 
-- (instancetype) initWithMCOperation:(mailcore::Operation *)op
+- (id) initWithMCOperation:(mailcore::Operation *)op
 {
     self = [super initWithMCOperation:op];
     
@@ -100,7 +99,7 @@ private:
     if (_completionBlock == NULL)
         return;
     
-    NSError * error = [self _errorFromNativeOperation];
+    NSError * error = [NSError mco_errorWithErrorCode:MCO_NATIVE_INSTANCE->error()];
     _completionBlock(error);
     [_completionBlock release];
     _completionBlock = NULL;

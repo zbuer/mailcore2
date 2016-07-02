@@ -6,6 +6,8 @@
 //  Copyright (c) 2014 MailCore. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
+
 #ifndef MAILCORE_MCONNTPSESSION_H
 
 #define MAILCORE_MCONNTPSESSION_H
@@ -20,13 +22,11 @@
 @class MCONNTPListNewsgroupsOperation;
 @class MCONNTPFetchOverviewOperation;
 @class MCONNTPFetchServerTimeOperation;
-@class MCONNTPPostOperation;
 @class MCONNTPOperation;
 @class MCOIndexSet;
 
 /** This class implements asynchronous access to the NNTP protocol.*/
 
-NS_ASSUME_NONNULL_BEGIN
 @interface MCONNTPSession : NSObject
 
 /** This is the hostname of the NNTP server to connect to.*/
@@ -100,7 +100,7 @@ NS_ASSUME_NONNULL_BEGIN
  Returns an operation that will fetch the list of article numbers.
  
  MCONNTPFetchAllArticlesOperation * op = [session fetchAllArticlesOperation:@"comp.lang.c"];
- [op start:^(NSError * __nullable error, MCOIndexSet * articles) {
+ [op start:^(NSError * error, MCOIndexSet * articles) {
  }];
  */
 - (MCONNTPFetchAllArticlesOperation *) fetchAllArticlesOperation:(NSString *)group;
@@ -109,7 +109,7 @@ NS_ASSUME_NONNULL_BEGIN
  Returns an operation that will fetch the header of the given message.
  
  MCONNTPFetchHeaderOperation * op = [session fetchHeaderOperationWithIndex:idx inGroup:@"comp.lang.c"];
- [op start:^(NSError * __nullable error, MCOMessageHeader * header) {
+ [op start:^(NSError * error, MCOMessageHeader * header) {
  // header is the parsed header of the message.
  }];
  */
@@ -119,7 +119,7 @@ NS_ASSUME_NONNULL_BEGIN
  Returns an operation that will fetch an overview (headers) for a set of messages.
  
  MCONNTPFetchHeaderOperation * op = [session fetchOverviewOperationWithIndexes:indexes inGroup:@"comp.lang.c"];
- [op start:^(NSError * __nullable error, NSArray * headers) {
+ [op start:^(NSError * error, NSArray * headers) {
  // headers are the parsed headers of each part of the overview.
  }];
  */
@@ -129,7 +129,7 @@ NS_ASSUME_NONNULL_BEGIN
  Returns an operation that will fetch the content of the given message.
  
  MCONNTPFetchArticleOperation * op = [session fetchArticleOperationWithIndex:idx inGroup:@"comp.lang.c"];
- [op start:^(NSError * __nullable error, NSData * messageData) {
+ [op start:^(NSError * error, NSData * messageData) {
  // messageData is the RFC 822 formatted message data.
  }];
  */
@@ -138,28 +138,18 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Returns an operation that will fetch the content of a message with the given messageID.
  
- MCONNTPFetchArticleOperation * op = [session fetchArticleOperationWithMessageID:@"<MessageID123@mail.google.com>"];
- [op start:^(NSError * __nullable error, NSData * messageData) {
- // messageData is the RFC 822 formatted message data.
- }];
- */
-- (MCONNTPFetchArticleOperation *) fetchArticleOperationWithMessageID:(NSString *)messageID;
-
-/**
- Obsolete. Use -fetchArticleOperationWithMessageID: instead.
- 
  MCONNTPFetchArticleOperation * op = [session fetchArticleOperationWithMessageID:@"<MessageID123@mail.google.com>" inGroup:@"comp.lang.c"];
- [op start:^(NSError * __nullable error, NSData * messageData) {
+ [op start:^(NSError * error, NSData * messageData) {
  // messageData is the RFC 822 formatted message data.
  }];
  */
-- (MCONNTPFetchArticleOperation *) fetchArticleOperationWithMessageID:(NSString *)messageID inGroup:(NSString * __nullable)group DEPRECATED_ATTRIBUTE;
+- (MCONNTPFetchArticleOperation *) fetchArticleOperationWithMessageID:(NSString *)messageID inGroup:(NSString *)group;
 
 /**
  Returns an operation that will fetch the server's date and time.
  
  MCONNTPFetchArticleOperation * op = [session fetchServerDateOperation];
- [op start:^(NSError * __nullable error, NSDate * serverDate) {
+ [op start:^(NSError * error, NSDate * serverDate) {
  }];
  */
 - (MCONNTPFetchServerTimeOperation *) fetchServerDateOperation;
@@ -168,7 +158,7 @@ NS_ASSUME_NONNULL_BEGIN
  Returns an operation that will list all available newsgroups.
  
  MCONNTPListNewsgroupsOperation * op = [session listAllNewsgroupsOperation];
- [op start:^(NSError * __nullable error, NSArray * subscribedGroups) {
+ [op start:^(NSError * error, NSArray * subscribedGroups) {
  }];
  */
 - (MCONNTPListNewsgroupsOperation *) listAllNewsgroupsOperation;
@@ -177,42 +167,16 @@ NS_ASSUME_NONNULL_BEGIN
  Returns an operation that will list server-suggested default newsgroups.
  
  MCONNTPListNewsgroupsOperation * op = [session listDefaultNewsgroupsOperation];
- [op start:^(NSError * __nullable error, NSArray * defaultGroups) {
+ [op start:^(NSError * error, NSArray * defaultGroups) {
  }];
  */
 - (MCONNTPListNewsgroupsOperation *) listDefaultNewsgroupsOperation;
 
 /**
- Returns an operation that will post the given message through NNTP.
- It will use the newsgroups set in the message data.
- It will also filter out Bcc from the content of the message.
- 
- Generate RFC 822 data using MCOMessageBuilder
- 
-      MCONNTPOperation * op = [session postOperationWithData:rfc822Data];
-      [op start:^(NSError * __nullable error) {
-           ...
-      }];
- */
-- (MCONNTPPostOperation *) postOperationWithData:(NSData *)messageData;
-
-/**
- Returns an operation that will post the message from the given file through NNTP.
- It will use the newsgroups set in the message data.
- It will also filter out Bcc from the content of the message.
- 
-      MCONNTPOperation * op = [session postOperationWithContentsOfFile:rfc822DataFilename];
-      [op start:^(NSError * __nullable error) {
-           ...
-      }];
- */
-- (MCONNTPPostOperation *) postOperationWithContentsOfFile:(NSString *)path;
-
-/**
  Returns an operation that will disconnect the session.
  
  MCONNTPOperation * op = [session disconnectOperation];
- [op start:^(NSError * __nullable error) {
+ [op start:^(NSError * error) {
  ...
  }];
  */
@@ -222,13 +186,12 @@ NS_ASSUME_NONNULL_BEGIN
  Returns an operation that will check whether the NNTP account is valid.
  
  MCONNTPOperation * op = [session checkAccountOperation];
- [op start:^(NSError * __nullable error) {
+ [op start:^(NSError * error) {
  ...
  }];
  */
 - (MCONNTPOperation *) checkAccountOperation;
 
 @end
-NS_ASSUME_NONNULL_END
 
 #endif

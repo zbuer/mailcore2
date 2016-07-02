@@ -26,7 +26,7 @@
     return sharedInstance;
 }
 
-- (instancetype) init
+- (id) init
 {
     NSString * filename;
     

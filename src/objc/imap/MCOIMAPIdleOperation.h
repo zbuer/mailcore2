@@ -18,7 +18,6 @@
 
 #import <MailCore/MCOIMAPBaseOperation.h>
 
-NS_ASSUME_NONNULL_BEGIN
 @interface MCOIMAPIdleOperation : MCOIMAPBaseOperation
 
 /** Stop the current IDLE session */
@@ -34,9 +33,8 @@ NS_ASSUME_NONNULL_BEGIN
  - On failure, `error` will be set with `MCOErrorDomain` as domain and an 
    error code available in `MCOConstants.h`
 */
-- (void) start:(void (^)(NSError * __nullable error))completionBlock;
+- (void) start:(void (^)(NSError * error))completionBlock;
 
 @end
-NS_ASSUME_NONNULL_END
 
 #endif

@@ -29,7 +29,7 @@ static void destroyDelayedCall(void * caller);
 @synthesize context = _context;
 @synthesize timer = _timer;
 
-- (instancetype) init
+- (id) init
 {
     self = [super init];
     return self;

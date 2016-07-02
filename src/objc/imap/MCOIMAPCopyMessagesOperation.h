@@ -16,7 +16,6 @@
 
 @class MCOIndexSet;
 
-NS_ASSUME_NONNULL_BEGIN
 @interface MCOIMAPCopyMessagesOperation : MCOIMAPBaseOperation
 
 /** 
@@ -31,9 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
    error code available in `MCOConstants.h`, `destUids` will be nil
 */
 
-- (void) start:(void (^)(NSError * __nullable error, NSDictionary * __nullable uidMapping))completionBlock;
+- (void) start:(void (^)(NSError * error, NSDictionary * uidMapping))completionBlock;
 
 @end
-NS_ASSUME_NONNULL_END
 
 #endif

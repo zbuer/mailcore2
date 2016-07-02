@@ -16,7 +16,6 @@ using namespace mailcore;
 IMAPAppendMessageOperation::IMAPAppendMessageOperation()
 {
     mMessageData = NULL;
-    mMessageFilepath = NULL;
     mFlags = MessageFlagNone;
     mCustomFlags = NULL;
     mDate = (time_t) -1;
@@ -26,7 +25,6 @@ IMAPAppendMessageOperation::IMAPAppendMessageOperation()
 IMAPAppendMessageOperation::~IMAPAppendMessageOperation()
 {
     MC_SAFE_RELEASE(mMessageData);
-    MC_SAFE_RELEASE(mMessageFilepath);
     MC_SAFE_RELEASE(mCustomFlags);
 }
 
@@ -38,16 +36,6 @@ void IMAPAppendMessageOperation::setMessageData(Data * messageData)
 Data * IMAPAppendMessageOperation::messageData()
 {
     return mMessageData;
-}
-
-void IMAPAppendMessageOperation::setMessageFilepath(String * path)
-{
-    MC_SAFE_REPLACE_RETAIN(String, mMessageFilepath, path);
-}
-
-String * IMAPAppendMessageOperation::messageFilepath()
-{
-    return mMessageFilepath;
 }
 
 void IMAPAppendMessageOperation::setFlags(MessageFlag flags)
@@ -88,12 +76,7 @@ uint32_t IMAPAppendMessageOperation::createdUID()
 void IMAPAppendMessageOperation::main()
 {
     ErrorCode error;
-    if (mMessageFilepath != NULL) {
-        session()->session()->appendMessageWithCustomFlagsAndDate(folder(), mMessageFilepath, mFlags, mCustomFlags, mDate, this, &mCreatedUID, &error);
-    }
-    else {
-        session()->session()->appendMessageWithCustomFlagsAndDate(folder(), mMessageData, mFlags, mCustomFlags, mDate, this, &mCreatedUID, &error);
-    }
+    session()->session()->appendMessageWithCustomFlagsAndDate(folder(), mMessageData, mFlags, mCustomFlags, mDate, this, &mCreatedUID, &error);
     setError(error);
 }
 

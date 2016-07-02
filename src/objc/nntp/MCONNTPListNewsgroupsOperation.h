@@ -13,7 +13,6 @@
 #import <Foundation/Foundation.h>
 #import <MailCore/MCONNTPOperation.h>
 
-NS_ASSUME_NONNULL_BEGIN
 @interface MCONNTPListNewsgroupsOperation : MCONNTPOperation
 
 /** 
@@ -26,9 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
  - On failure, `error` will be set with `MCOErrorDomain` as domain and an 
  error code available in MCOConstants.h, `messages` will be null
  */
-- (void) start:(void (^)(NSError * __nullable error, NSArray * /* MCONNTPGroupInfo */__nullable messages))completionBlock;
+- (void) start:(void (^)(NSError * error, NSArray * /* MCONNTPGroupInfo */ messages))completionBlock;
 
 @end
-NS_ASSUME_NONNULL_END
 
 #endif

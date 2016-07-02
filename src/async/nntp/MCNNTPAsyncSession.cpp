@@ -16,7 +16,6 @@
 #include "MCNNTPFetchOverviewOperation.h"
 #include "MCNNTPCheckAccountOperation.h"
 #include "MCNNTPFetchServerTimeOperation.h"
-#include "MCNNTPPostOperation.h"
 #include "MCNNTPDisconnectOperation.h"
 #include "MCOperationQueueCallback.h"
 #include "MCConnectionLogger.h"
@@ -192,10 +191,11 @@ NNTPFetchArticleOperation * NNTPAsyncSession::fetchArticleOperation(String * gro
     return op;
 }
 
-NNTPFetchArticleOperation * NNTPAsyncSession::fetchArticleByMessageIDOperation(String *messageID)
+NNTPFetchArticleOperation * NNTPAsyncSession::fetchArticleByMessageIDOperation(String *groupName, String *messageID)
 {
     NNTPFetchArticleOperation * op = new NNTPFetchArticleOperation();
     op->setSession(this);
+    op->setGroupName(groupName);
     op->setMessageID(messageID);
     op->autorelease();
     return op;
@@ -237,24 +237,6 @@ NNTPListNewsgroupsOperation * NNTPAsyncSession::listDefaultNewsgroupsOperation()
     return op;
 }
 
-NNTPPostOperation * NNTPAsyncSession::postMessageOperation(Data * messageData)
-{
-    NNTPPostOperation * op = new NNTPPostOperation();
-    op->setSession(this);
-    op->setMessageData(messageData);
-    op->autorelease();
-    return op;
-}
-
-NNTPPostOperation * NNTPAsyncSession::postMessageOperation(String * filename)
-{
-    NNTPPostOperation * op = new NNTPPostOperation();
-    op->setSession(this);
-    op->setMessageFilepath(filename);
-    op->autorelease();
-    return op;
-}
-
 NNTPOperation * NNTPAsyncSession::disconnectOperation()
 {
     NNTPDisconnectOperation * op = new NNTPDisconnectOperation();
@@ -285,13 +267,13 @@ void NNTPAsyncSession::setConnectionLogger(ConnectionLogger * logger)
 {
     pthread_mutex_lock(&mConnectionLoggerLock);
     mConnectionLogger = logger;
-    pthread_mutex_unlock(&mConnectionLoggerLock);
-    if (logger != NULL) {
+    if (mConnectionLogger != NULL) {
         mSession->setConnectionLogger(mInternalLogger);
     }
     else {
         mSession->setConnectionLogger(NULL);
     }
+    pthread_mutex_unlock(&mConnectionLoggerLock);
 }
 
 ConnectionLogger * NNTPAsyncSession::connectionLogger()

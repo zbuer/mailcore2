@@ -40,7 +40,7 @@
     return [[[self alloc] initWithInfo:info] autorelease];
 }
 
-- (instancetype) initWithInfo:(NSDictionary *)info
+- (id) initWithInfo:(NSDictionary *)info
 {
     self = [super init];
     
@@ -50,7 +50,7 @@
     return self;
 }
 
-- (instancetype) initWithNetService:(mailcore::NetService *)netService
+- (id) initWithNetService:(mailcore::NetService *)netService
 {
     self = [super init];
     

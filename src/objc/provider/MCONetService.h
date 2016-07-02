@@ -29,7 +29,7 @@
 
 + (MCONetService *) serviceWithInfo:(NSDictionary *)info;
 
-- (instancetype) initWithInfo:(NSDictionary *)info;
+- (id) initWithInfo:(NSDictionary *)info;
 - (NSDictionary *) info;
 
 /** 
@@ -37,14 +37,5 @@
     off the email address
 */
 - (NSString *) hostnameWithEmail:(NSString *)email;
-
-@end
-
-@interface MCONetService (MCOUnavailable)
-
-/** Do not invoke this directly. */
-- (instancetype) init NS_UNAVAILABLE;
-/** Do not invoke this directly. */
-+ (instancetype) new NS_UNAVAILABLE;
 
 @end

@@ -12,7 +12,6 @@
 
 #import "MCOUtils.h"
 #import "MCOOperation+Private.h"
-#import "MCOSMTPOperation+Private.h"
 
 typedef void (^CompletionType)(NSError *error);
 
@@ -57,7 +56,7 @@ typedef void (^CompletionType)(NSError *error);
     if (_completionBlock == NULL)
         return;
     
-    NSError * error = [self _errorFromNativeOperation];
+    NSError * error = [NSError mco_errorWithErrorCode:MCO_NATIVE_INSTANCE->error()];
     _completionBlock(error);
     [_completionBlock release];
     _completionBlock = NULL;

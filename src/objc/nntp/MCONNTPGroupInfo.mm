@@ -48,7 +48,7 @@
     return MCO_OBJC_BRIDGE_GET(description);
 }
 
-- (instancetype) initWithMCNNTPGroupInfo:(mailcore::NNTPGroupInfo *)info
+- (id) initWithMCNNTPGroupInfo:(mailcore::NNTPGroupInfo *)info
 {
     self = [super init];
     

@@ -110,7 +110,7 @@ void IMAPOperation::start()
         IMAPAsyncConnection * connection = mMainSession->sessionForFolder(mFolder, mUrgent);
         setSession(connection);
     }
-    session()->runOperation(this);
+    mSession->runOperation(this);
 }
 
 struct progressContext {

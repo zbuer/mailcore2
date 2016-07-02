@@ -16,8 +16,6 @@
 
 @property (nonatomic, retain) MCOSMTPSession * session;
 
-- (NSError *) _errorFromNativeOperation;
-
 @end
 
 #endif

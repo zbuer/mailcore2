@@ -34,10 +34,6 @@ namespace mailcore {
         virtual void setError(ErrorCode error);
         virtual ErrorCode error();
         
-        virtual String * lastSMTPResponse();
-
-        virtual int lastSMTPResponseCode();
-
         virtual void start();
         
     private:

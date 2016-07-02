@@ -16,7 +16,6 @@
 
 @class MCOIndexSet;
 
-NS_ASSUME_NONNULL_BEGIN
 @interface MCOIMAPSearchOperation : MCOIMAPBaseOperation
 
 /** 
@@ -30,9 +29,8 @@ NS_ASSUME_NONNULL_BEGIN
    error code available in MCOConstants.h, `searchResult` will be nil
 */
 
-- (void) start:(void (^)(NSError * __nullable error, MCOIndexSet * __nullable searchResult))completionBlock;
+- (void) start:(void (^)(NSError * error, MCOIndexSet * searchResult))completionBlock;
 
 @end
-NS_ASSUME_NONNULL_END
 
 #endif

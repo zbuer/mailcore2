@@ -131,12 +131,11 @@ JNIEXPORT jobject JNICALL Java_com_libmailcore_IndexSet_allRanges
     jmethodID constructor = env->GetMethodID(cls, "<init>", "(I)V");
     unsigned int count = MC_JAVA_NATIVE_INSTANCE->rangesCount();
     jobject javaVector = env->NewObject(cls, constructor, count);
-    jmethodID method = env->GetMethodID(cls, "add", "(Ljava/lang/Object;)Z");
+    jmethodID method = env->GetMethodID(cls, "add", "(Ljava.lang.Object;)Z");
     Range * ranges = MC_JAVA_NATIVE_INSTANCE->allRanges();
     for(unsigned int i = 0 ; i < count ; i ++) {
         jobject javaObject = rangeToJava(env, ranges[i]);
         env->CallBooleanMethod(javaVector, method, javaObject);
-        env->DeleteLocalRef(javaObject);
     }
     MC_POOL_END;
     return javaVector;

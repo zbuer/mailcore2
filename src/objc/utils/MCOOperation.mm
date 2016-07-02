@@ -56,7 +56,7 @@ public:
     return _operation;
 }
 
-- (instancetype) initWithMCOperation:(Operation *)op
+- (id) initWithMCOperation:(Operation *)op
 {
     self = [super init];
     

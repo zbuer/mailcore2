@@ -97,10 +97,10 @@ JNIEXPORT jstring JNICALL Java_com_libmailcore_HTMLRendererTemplateCallbackUtils
 
 /*
  * Class:     com_libmailcore_HTMLRendererTemplateCallbackUtils
- * Method:    cleanHTMLForPart
+ * Method:    cleanHTML
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_com_libmailcore_HTMLRendererTemplateCallbackUtils_cleanHTMLForPart
+JNIEXPORT jstring JNICALL Java_com_libmailcore_HTMLRendererTemplateCallbackUtils_cleanHTML
   (JNIEnv *, jclass, jstring);
 
 /*

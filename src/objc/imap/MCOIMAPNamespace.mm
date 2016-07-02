@@ -37,7 +37,7 @@
     return [[[self alloc] initWithMCNamespace:ns] autorelease];
 }
 
-- (instancetype) init
+- (id) init
 {
     mailcore::IMAPNamespace * ns = new mailcore::IMAPNamespace();
     self = [self initWithMCNamespace:ns];
@@ -46,7 +46,7 @@
     return self;
 }
 
-- (instancetype) initWithMCNamespace:(mailcore::IMAPNamespace *)ns
+- (id) initWithMCNamespace:(mailcore::IMAPNamespace *)ns
 {
     self = [super init];
     

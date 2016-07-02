@@ -47,7 +47,7 @@ private:
 
 MCO_OBJC_SYNTHESIZE_SCALAR(BOOL, bool, setUrgent, isUrgent)
 
-- (instancetype) initWithMCOperation:(mailcore::Operation *)op
+- (id) initWithMCOperation:(mailcore::Operation *)op
 {
     self = [super initWithMCOperation:op];
     

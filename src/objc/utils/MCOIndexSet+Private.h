@@ -13,7 +13,7 @@
 #ifdef __cplusplus
 @interface MCOIndexSet (Private)
 
-- (instancetype) initWithMCIndexSet:(mailcore::IndexSet *)indexSet;
+- (id) initWithMCIndexSet:(mailcore::IndexSet *)indexSet;
 
 @end
 #endif

@@ -38,8 +38,6 @@ namespace mailcore {
         
         static DateFormatter * dateFormatter();
         
-        virtual void prepare();
-
         virtual void setDateStyle(DateFormatStyle style);
         virtual DateFormatStyle dateStyle();
         
@@ -57,7 +55,7 @@ namespace mailcore {
         
         virtual String * stringFromDate(time_t date);
         virtual time_t dateFromString(String * dateString);
-
+        
     private:
         UDateFormat * mDateFormatter;
         DateFormatStyle mDateStyle;
@@ -66,6 +64,8 @@ namespace mailcore {
         String * mTimezone;
         String * mLocale;
         void * mAppleDateFormatter;
+        
+        void prepare();
     };
     
 }

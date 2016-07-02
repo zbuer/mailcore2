@@ -13,7 +13,10 @@
 #import <Foundation/Foundation.h>
 #import <MailCore/MCONNTPOperation.h>
 
-NS_ASSUME_NONNULL_BEGIN
+/** Fetch a message from NNTP3 */
+
+typedef void (^MCONNTPOperationProgressBlock)(unsigned int current, unsigned int maximum);
+
 @interface MCONNTPFetchArticleOperation : MCONNTPOperation
 
 /** This block will be called as data is downloaded from the network */
@@ -29,9 +32,8 @@ NS_ASSUME_NONNULL_BEGIN
  - On failure, `error` will be set with `MCOErrorDomain` as domain and an 
  error code available in MCOConstants.h, `data` will be nil
  */
-- (void) start:(void (^)(NSError * __nullable error, NSData * __nullable messageData))completionBlock;
+- (void) start:(void (^)(NSError * error, NSData * messageData))completionBlock;
 
 @end
-NS_ASSUME_NONNULL_END
 
 #endif

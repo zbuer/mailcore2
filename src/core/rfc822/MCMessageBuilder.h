@@ -40,10 +40,7 @@ namespace mailcore {
         
         virtual Data * data();
         virtual Data * dataForEncryption();
-
-        // Store builded message to file.
-        virtual ErrorCode writeToFile(String * filename);
-
+        
         virtual String * htmlRendering(HTMLRendererTemplateCallback * htmlCallback = NULL);
         virtual String * htmlBodyRendering();
         

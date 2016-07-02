@@ -18,7 +18,6 @@
 #include <MailCore/MCONNTPListNewsgroupsOperation.h>
 #include <MailCore/MCONNTPFetchOverviewOperation.h>
 #include <MailCore/MCONNTPFetchServerTimeOperation.h>
-#include <MailCore/MCONNTPPostOperation.h>
 #include <MailCore/MCONNTPGroupInfo.h>
 
 #endif

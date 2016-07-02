@@ -19,7 +19,6 @@
 namespace mailcore {
     
     class MessageParser;
-    class Attachment;
     
     class MAILCORE_EXPORT HTMLRendererIMAPCallback {
     public:
@@ -59,12 +58,6 @@ namespace mailcore {
         
         // Can be used to hide quoted text.
         virtual String * filterHTMLForMessage(String * html);
-    };
-
-    class MAILCORE_EXPORT HTMLRendererRFC822Callback {
-    public:
-        virtual Data * dataForRFC822Part(String * folder, Attachment * part) { return NULL; }
-
     };
     
 }

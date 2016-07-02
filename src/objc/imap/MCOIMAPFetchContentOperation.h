@@ -18,7 +18,6 @@
 #import <MailCore/MCOIMAPBaseOperation.h>
 #import <MailCore/MCOConstants.h>
 
-NS_ASSUME_NONNULL_BEGIN
 @interface MCOIMAPFetchContentOperation : MCOIMAPBaseOperation
 
 /** 
@@ -37,9 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
    error code available in `MCOConstants.h`, `data` will be nil
 */
 
-- (void) start:(void (^)(NSError * __nullable error, NSData * __nullable data))completionBlock;
+- (void) start:(void (^)(NSError * error, NSData * data))completionBlock;
 
 @end
-NS_ASSUME_NONNULL_END
 
 #endif

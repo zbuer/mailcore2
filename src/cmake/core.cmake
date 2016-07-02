@@ -19,10 +19,6 @@ IF(APPLE)
     core/rfc822/MCMessageParserMac.mm
   )
 
-  set(zip_files_apple
-    core/zip/MCZipMac.mm
-  )
-
   set(core_includes_apple
     "${CMAKE_CURRENT_SOURCE_DIR}/core/basetypes/icu-ucsdet"
     "${CMAKE_CURRENT_SOURCE_DIR}/core/basetypes/icu-ucsdet/include"
@@ -43,8 +39,6 @@ set(basetypes_files
   core/basetypes/MCBase64.c
   core/basetypes/MCConnectionLoggerUtils.cpp
   core/basetypes/MCData.cpp
-  core/basetypes/MCDataDecoderUtils.cpp
-  core/basetypes/MCDataStreamDecoder.cpp
   core/basetypes/MCHash.cpp
   core/basetypes/MCHashMap.cpp
   core/basetypes/MCHTMLCleaner.cpp
@@ -155,7 +149,6 @@ set(zip_files
   core/zip/MiniZip/ioapi.c
   core/zip/MiniZip/unzip.c
   core/zip/MiniZip/zip.c
-  ${zip_files_apple}
 )
 
 set(security_files

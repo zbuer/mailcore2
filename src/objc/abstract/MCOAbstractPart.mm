@@ -7,6 +7,7 @@
 //
 
 #import "MCOAbstractPart.h"
+#import "MCOAbstractPart+Private.h"
 
 #include "MCAbstractPart.h"
 #include "MCAbstractMessage.h"
@@ -26,18 +27,17 @@
     return _part;
 }
 
-- (instancetype) init
+- (id) init
 {
-    self = [self initWithMCPart:NULL];
     MCAssert(0);
     return nil;
 }
 
-- (instancetype) initWithMCPart:(mailcore::AbstractPart *)part
+- (id) initWithMCPart:(mailcore::AbstractPart *)part
 {
     self = [super init];
     
-    MC_SAFE_RETAIN(part);
+    part->retain();
     _part = part;
     
     return self;

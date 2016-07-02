@@ -22,7 +22,7 @@
     MCORegisterClass(self, &typeid(nativeType));
 }
 
-- (instancetype) initWithMCFolderStatus:(mailcore::IMAPFolderStatus *)status
+- (id) initWithMCFolderStatus:(mailcore::IMAPFolderStatus *)status
 {
     self = [super init];
     

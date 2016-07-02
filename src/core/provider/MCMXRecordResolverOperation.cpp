@@ -8,10 +8,8 @@
 
 #include "MCMXRecordResolverOperation.h"
 
-#if !defined(ANDROID) && !defined(__ANDROID__)
 #include <arpa/inet.h>
 #include <resolv.h>
-#endif
 
 using namespace mailcore;
 
@@ -45,7 +43,6 @@ Array * MXRecordResolverOperation::mxRecords()
 void MXRecordResolverOperation::main()
 {
     mMXRecords = new Array();
-#if !defined(ANDROID) && !defined(__ANDROID__)
     unsigned char response[NS_PACKETSZ];
     ns_msg handle;
     ns_rr rr;
@@ -70,6 +67,5 @@ void MXRecordResolverOperation::main()
             }
         }
     }
-#endif
 }
 

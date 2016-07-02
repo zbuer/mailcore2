@@ -21,7 +21,6 @@
 #include "MCIMAPCopyMessagesOperation.h"
 #include "MCIMAPFetchMessagesOperation.h"
 #include "MCIMAPFetchContentOperation.h"
-#include "MCIMAPFetchContentToFileOperation.h"
 #include "MCIMAPFetchParsedContentOperation.h"
 #include "MCIMAPStoreFlagsOperation.h"
 #include "MCIMAPStoreLabelsOperation.h"
@@ -39,7 +38,6 @@
 #include "MCIMAPAsyncSession.h"
 #include "MCConnectionLogger.h"
 #include "MCIMAPMessageRenderingOperation.h"
-#include "MCIMAPCustomCommandOperation.h"
 #include "MCIMAPIdentity.h"
 
 using namespace mailcore;
@@ -366,13 +364,13 @@ void IMAPAsyncConnection::setConnectionLogger(ConnectionLogger * logger)
 {
     pthread_mutex_lock(&mConnectionLoggerLock);
     mConnectionLogger = logger;
-    pthread_mutex_unlock(&mConnectionLoggerLock);
-    if (logger != NULL) {
+    if (mConnectionLogger != NULL) {
         mSession->setConnectionLogger(mInternalLogger);
     }
     else {
         mSession->setConnectionLogger(NULL);
     }
+    pthread_mutex_unlock(&mConnectionLoggerLock);
 }
 
 ConnectionLogger * IMAPAsyncConnection::connectionLogger()

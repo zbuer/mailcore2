@@ -18,8 +18,6 @@ namespace mailcore {
     
     class MAILCORE_EXPORT AddressDisplay {
     public:
-        static String * sanitizeDisplayName(String * displayName);
-
         static String * displayStringForAddress(Address * address);
         static String * shortDisplayStringForAddress(Address * address);
         static String * veryShortDisplayStringForAddress(Address * address);

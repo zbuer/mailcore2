@@ -2,8 +2,6 @@
 
 #include <libetpan/libetpan.h>
 
-#include "MCDefines.h"
-
 using namespace mailcore;
 
 static Array * encodedComponents(Array * components);
@@ -171,14 +169,4 @@ void IMAPNamespaceItem::importSerializable(HashMap * serializable)
     if ((delimiterString != NULL) && (delimiterString->length() > 0)) {
         setDelimiter((char) delimiterString->characterAtIndex(0));
     }
-}
-
-static void * createObject()
-{
-    return new IMAPNamespaceItem();
-}
-
-INITIALIZE(IMAPNamespaceItem)
-{
-    Object::registerObjectConstructor("mailcore::IMAPNamespaceItem", &createObject);
 }

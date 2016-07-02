@@ -326,9 +326,6 @@ void MessageHeader::setExtraHeader(String * name, String * object)
         mExtraHeaders = new HashMap();
     }
     removeExtraHeader(name);
-    if (object == NULL) {
-        return;
-    }
     mExtraHeaders->setObjectForKey(name, object);
 }
 
@@ -519,10 +516,6 @@ void MessageHeader::importIMFFields(struct mailimf_fields * fields)
         
         fieldName = field->fld_data.fld_optional_field->fld_name;
         fieldNameStr = String::stringWithUTF8Characters(fieldName);
-        if (fieldNameStr == NULL) {
-            continue;
-        }
-
         // Set only if this optional-field is not set
         if (extraHeaderValueForName(fieldNameStr) == NULL) {
             char * fieldValue;
@@ -530,9 +523,7 @@ void MessageHeader::importIMFFields(struct mailimf_fields * fields)
             
             fieldValue = field->fld_data.fld_optional_field->fld_value;
             fieldValueStr = String::stringByDecodingMIMEHeaderValue(fieldValue);
-            if (fieldValueStr != NULL) {
-                setExtraHeader(fieldNameStr, fieldValueStr);
-            }
+            setExtraHeader(fieldNameStr, fieldValueStr);
         }
     }
 }
@@ -730,7 +721,12 @@ struct mailimf_fields * MessageHeader::createIMFFieldsAndFilterBcc(bool filterBc
             imfSubject = strdup(data->bytes());
         }
     }
-
+    
+    if ((imfTo == NULL) && (imfCc == NULL) && (imfBcc == NULL)) {
+        imfTo = mailimf_address_list_new_empty();
+        mailimf_address_list_add_parse(imfTo, (char *) "Undisclosed recipients:;");
+    }
+    
     fields = mailimf_fields_new_with_data_all(imfDate,
         imfFrom,
         NULL /* sender */,
@@ -1028,14 +1024,12 @@ Array * MessageHeader::recipientWithReplyAll(bool replyAll, bool includeTo, bool
                 }
                 if ((from() != NULL) && address->mailbox()->isEqualCaseInsensitive(from()->mailbox())) {
                     recipient->addObjectsFromArray(replyTo());
-                    if (replyTo() != NULL) {
-                        for(unsigned int j = 0 ; j < replyTo()->count() ; j ++) {
-                            Address * rtAddress = (Address *) replyTo()->objectAtIndex(j);
-                            if (addedAddresses->containsObject(rtAddress->mailbox()->lowercaseString())) {
-                                continue;
-                            }
-                            addedAddresses->addObject(rtAddress->mailbox()->lowercaseString());
+                    for(unsigned int j = 0 ; j < replyTo()->count() ; j ++) {
+                        Address * rtAddress = (Address *) replyTo()->objectAtIndex(j);
+                        if (addedAddresses->containsObject(rtAddress->mailbox()->lowercaseString())) {
+                            continue;
                         }
+                        addedAddresses->addObject(rtAddress->mailbox()->lowercaseString());
                     }
                 }
                 else {
@@ -1209,7 +1203,7 @@ MessageHeader * MessageHeader::forwardHeader()
         subjectValue = MCSTR("Fw: ");
     }
     else {
-        subjectValue = MCSTR("Fw: ")->stringByAppendingString(subject()->extractedSubjectAndKeepBracket(true));
+        subjectValue = MCSTR("Fw: ")->stringByAppendingString(subject());
     }
     if (references() != NULL) {
         referencesValue = (Array *) (references()->copy());

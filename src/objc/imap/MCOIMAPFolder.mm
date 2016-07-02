@@ -37,7 +37,7 @@
     return [[[self alloc] initWithMCFolder:folder] autorelease];
 }
 
-- (instancetype) init
+- (id) init
 {
     mailcore::IMAPFolder * folder = new mailcore::IMAPFolder();
     self = [self initWithMCFolder:folder];
@@ -46,7 +46,7 @@
     return self;
 }
 
-- (instancetype) initWithMCFolder:(mailcore::IMAPFolder *)folder
+- (id) initWithMCFolder:(mailcore::IMAPFolder *)folder
 {
     self = [super init];
     

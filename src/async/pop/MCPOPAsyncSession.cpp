@@ -240,13 +240,13 @@ void POPAsyncSession::setConnectionLogger(ConnectionLogger * logger)
 {
     pthread_mutex_lock(&mConnectionLoggerLock);
     mConnectionLogger = logger;
-    pthread_mutex_unlock(&mConnectionLoggerLock);
-    if (logger != NULL) {
+    if (mConnectionLogger != NULL) {
         mSession->setConnectionLogger(mInternalLogger);
     }
     else {
         mSession->setConnectionLogger(NULL);
     }
+    pthread_mutex_unlock(&mConnectionLoggerLock);
 }
 
 ConnectionLogger * POPAsyncSession::connectionLogger()

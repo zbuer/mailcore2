@@ -14,7 +14,6 @@
 #import "MCONNTPOperation.h"
 #import "MCOOperation+Private.h"
 #import "MCONNTPFetchAllArticlesOperation.h"
-#import "MCONNTPPostOperation.h"
 #import "MCONNTPOperation+Private.h"
 #include "MCOperationQueueCallback.h"
 
@@ -72,7 +71,7 @@ private:
     return MCO_OBJC_BRIDGE_GET(description);
 }
 
-- (instancetype) init {
+- (id)init {
     self = [super init];
     
     _session = new mailcore::NNTPAsyncSession();
@@ -177,13 +176,9 @@ MCO_OBJC_SYNTHESIZE_SCALAR(dispatch_queue_t, dispatch_queue_t, setDispatchQueue,
     return MCO_TO_OBJC_OP(coreOp);
 }
 
-- (MCONNTPFetchArticleOperation *) fetchArticleOperationWithMessageID:(NSString *)messageID {
-    mailcore::NNTPFetchArticleOperation * coreOp = MCO_NATIVE_INSTANCE->fetchArticleByMessageIDOperation(MCO_FROM_OBJC(mailcore::String, messageID));
+- (MCONNTPFetchArticleOperation *) fetchArticleOperationWithMessageID:(NSString *)messageID inGroup:(NSString *)group {
+    mailcore::NNTPFetchArticleOperation * coreOp = MCO_NATIVE_INSTANCE->fetchArticleByMessageIDOperation(MCO_FROM_OBJC(mailcore::String, group), MCO_FROM_OBJC(mailcore::String, messageID));
     return MCO_TO_OBJC_OP(coreOp);
-}
-
-- (MCONNTPFetchArticleOperation *) fetchArticleOperationWithMessageID:(NSString *)messageID inGroup:(NSString * __nullable)group {
-    return [self fetchArticleOperationWithMessageID:messageID];
 }
 
 - (MCONNTPFetchOverviewOperation *)fetchOverviewOperationWithIndexes:(MCOIndexSet *)indexes inGroup:(NSString *)group {
@@ -203,17 +198,6 @@ MCO_OBJC_SYNTHESIZE_SCALAR(dispatch_queue_t, dispatch_queue_t, setDispatchQueue,
 
 - (MCONNTPListNewsgroupsOperation *) listDefaultNewsgroupsOperation {
     mailcore::NNTPListNewsgroupsOperation * coreOp = MCO_NATIVE_INSTANCE->listDefaultNewsgroupsOperation();
-    return MCO_TO_OBJC_OP(coreOp);
-}
-
-- (MCONNTPPostOperation *) postOperationWithData:(NSData *)messageData {
-    mailcore::NNTPPostOperation * coreOp = MCO_NATIVE_INSTANCE->postMessageOperation(MCO_FROM_OBJC(mailcore::Data, messageData));
-    return MCO_TO_OBJC_OP(coreOp);
-}
-
-- (MCONNTPPostOperation *) postOperationWithContentsOfFile:(NSString *)path
-{
-    mailcore::NNTPPostOperation * coreOp = MCO_NATIVE_INSTANCE->postMessageOperation(MCO_FROM_OBJC(mailcore::String, path));
     return MCO_TO_OBJC_OP(coreOp);
 }
 

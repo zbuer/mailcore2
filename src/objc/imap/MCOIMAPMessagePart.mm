@@ -10,6 +10,7 @@
 
 #include "MCIMAP.h"
 
+#import "MCOAbstractPart+Private.h"
 #import "MCOUtils.h"
 
 @implementation MCOIMAPMessagePart

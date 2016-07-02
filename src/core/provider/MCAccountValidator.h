@@ -23,7 +23,7 @@ namespace mailcore {
     class POPAsyncSession;
     class SMTPAsyncSession;
 
-    class MAILCORE_EXPORT AccountValidator : public Operation, public OperationCallback, public ConnectionLogger {
+    class MAILCORE_EXPORT AccountValidator : public Operation, public OperationCallback {
     public:
         AccountValidator();
         virtual ~AccountValidator();
@@ -53,9 +53,6 @@ namespace mailcore {
         virtual void setPopServices(Array * popServices);
         virtual Array * /* NetService */ popServices();
         
-        virtual void setConnectionLogger(ConnectionLogger * logger);
-        virtual ConnectionLogger * connectionLogger();
-
         // result
         virtual String * identifier();
         virtual NetService * imapServer();
@@ -64,14 +61,10 @@ namespace mailcore {
         virtual ErrorCode imapError();
         virtual ErrorCode popError();
         virtual ErrorCode smtpError();
-        virtual String * imapLoginResponse();
-
+        
         virtual void start();
         virtual void cancel();
-
-    public: // ConnectionLogger
-        virtual void log(void * sender, ConnectionLogType logType, Data * buffer);
-
+        
     private:
         String * mEmail; /* for SMTP */
         String * mUsername;
@@ -90,7 +83,6 @@ namespace mailcore {
         ErrorCode mImapError;
         ErrorCode mPopError;
         ErrorCode mSmtpError;
-        String * mImapLoginResponse;
         
         MailProvider * mProvider;
         
@@ -112,14 +104,10 @@ namespace mailcore {
         bool mPopEnabled;
         bool mSmtpEnabled;
 
-        pthread_mutex_t mConnectionLoggerLock;
-        ConnectionLogger * mConnectionLogger;
-
         void init();
         void setupServices();
         void resolveMX();
         void resolveMXDone();
-        void resolveMXTimeout(void * context);
         void startCheckingHosts();
         void checkNextHost();
         void checkNextHostDone();

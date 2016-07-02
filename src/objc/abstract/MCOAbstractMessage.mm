@@ -28,18 +28,17 @@
     return _message;
 }
 
-- (instancetype) init
+- (id) init
 {
-    self = [self initWithMCMessage:NULL];
     MCAssert(0);
     return nil;
 }
 
-- (instancetype) initWithMCMessage:(mailcore::AbstractMessage *)message
+- (id) initWithMCMessage:(mailcore::AbstractMessage *)message
 {
     self = [super init];
     
-    MC_SAFE_RETAIN(message);
+    message->retain();
     _message = message;
     
     return self;

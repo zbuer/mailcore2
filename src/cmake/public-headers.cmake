@@ -12,8 +12,6 @@ core/basetypes/MCString.h
 core/basetypes/MCRange.h
 core/basetypes/MCICUTypes.h
 core/basetypes/MCData.h
-core/basetypes/MCDataDecoderUtils.h
-core/basetypes/MCDataStreamDecoder.h
 core/abstract/MCMessageConstants.h
 core/basetypes/MCArray.h
 core/basetypes/MCHashMap.h
@@ -88,10 +86,8 @@ async/imap/MCIMAPOperation.h
 async/imap/MCIMAPFetchFoldersOperation.h
 async/imap/MCIMAPAppendMessageOperation.h
 async/imap/MCIMAPCopyMessagesOperation.h
-async/imap/MCIMAPMoveMessagesOperation.h
 async/imap/MCIMAPFetchMessagesOperation.h
 async/imap/MCIMAPFetchContentOperation.h
-async/imap/MCIMAPFetchContentToFileOperation.h
 async/imap/MCIMAPFetchParsedContentOperation.h
 async/imap/MCIMAPIdleOperation.h
 async/imap/MCIMAPFolderInfo.h
@@ -104,8 +100,6 @@ async/imap/MCIMAPCapabilityOperation.h
 async/imap/MCIMAPQuotaOperation.h
 async/imap/MCIMAPOperationCallback.h
 async/imap/MCIMAPMessageRenderingOperation.h
-async/imap/MCIMAPCustomCommandOperation.h
-async/imap/MCIMAPCheckAccountOperation.h
 async/pop/MCAsyncPOP.h
 async/pop/MCPOPAsyncSession.h
 async/pop/MCPOPOperation.h
@@ -122,7 +116,6 @@ async/nntp/MCNNTPFetchAllArticlesOperation.h
 async/nntp/MCNNTPListNewsgroupsOperation.h
 async/nntp/MCNNTPFetchOverviewOperation.h
 async/nntp/MCNNTPFetchServerTimeOperation.h
-async/nntp/MCNNTPPostOperation.h
 async/nntp/MCNNTPOperationCallback.h
 objc/MCObjC.h
 objc/utils/MCOUtils.h
@@ -167,10 +160,8 @@ objc/imap/MCOIMAPFolderStatusOperation.h
 objc/imap/MCOIMAPFolderStatus.h
 objc/imap/MCOIMAPAppendMessageOperation.h
 objc/imap/MCOIMAPCopyMessagesOperation.h
-objc/imap/MCOIMAPMoveMessagesOperation.h
 objc/imap/MCOIMAPFetchMessagesOperation.h
 objc/imap/MCOIMAPFetchContentOperation.h
-objc/imap/MCOIMAPFetchContentToFileOperation.h
 objc/imap/MCOIMAPFetchParsedContentOperation.h
 objc/imap/MCOIMAPSearchOperation.h
 objc/imap/MCOIMAPIdleOperation.h
@@ -180,7 +171,6 @@ objc/imap/MCOIMAPCapabilityOperation.h
 objc/imap/MCOIMAPQuotaOperation.h
 objc/imap/MCOIMAPSearchExpression.h
 objc/imap/MCOIMAPMessageRenderingOperation.h
-objc/imap/MCOIMAPCustomCommandOperation.h
 objc/rfc822/MCORFC822.h
 objc/rfc822/MCOAttachment.h
 objc/rfc822/MCOMessageBuilder.h
@@ -207,7 +197,6 @@ objc/nntp/MCONNTPFetchAllArticlesOperation.h
 objc/nntp/MCONNTPListNewsgroupsOperation.h
 objc/nntp/MCONNTPFetchOverviewOperation.h
 objc/nntp/MCONNTPFetchServerTimeOperation.h
-objc/nntp/MCONNTPPostOperation.h
 objc/nntp/MCONNTPGroupInfo.h
 objc/provider/MCOProvider.h
 objc/provider/MCONetService.h

@@ -26,10 +26,8 @@
 #include "MCIMAPExpungeOperation.h"
 #include "MCIMAPAppendMessageOperation.h"
 #include "MCIMAPCopyMessagesOperation.h"
-#include "MCIMAPMoveMessagesOperation.h"
 #include "MCIMAPFetchMessagesOperation.h"
 #include "MCIMAPFetchContentOperation.h"
-#include "MCIMAPFetchContentToFileOperation.h"
 #include "MCIMAPFetchParsedContentOperation.h"
 #include "MCIMAPStoreFlagsOperation.h"
 #include "MCIMAPStoreLabelsOperation.h"
@@ -44,7 +42,6 @@
 #include "MCIMAPDisconnectOperation.h"
 #include "MCIMAPNoopOperation.h"
 #include "MCIMAPMessageRenderingOperation.h"
-#include "MCIMAPCustomCommandOperation.h"
 
 #define DEFAULT_MAX_CONNECTIONS 3
 
@@ -77,7 +74,6 @@ IMAPAsyncSession::IMAPAsyncSession()
 #endif
     mGmailUserDisplayName = NULL;
     mQueueRunning = false;
-    mIdleEnabled = false;
 }
 
 IMAPAsyncSession::~IMAPAsyncSession()
@@ -238,19 +234,9 @@ IMAPIdentity * IMAPAsyncSession::clientIdentity()
     return mClientIdentity;
 }
 
-void IMAPAsyncSession::setClientIdentity(IMAPIdentity * clientIdentity)
-{
-    MC_SAFE_REPLACE_COPY(IMAPIdentity, mClientIdentity, clientIdentity);
-}
-
 String * IMAPAsyncSession::gmailUserDisplayName()
 {
     return mGmailUserDisplayName;
-}
-
-bool IMAPAsyncSession::isIdleEnabled()
-{
-    return mIdleEnabled;
 }
 
 IMAPAsyncConnection * IMAPAsyncSession::session()
@@ -287,21 +273,11 @@ IMAPAsyncConnection * IMAPAsyncSession::session()
 IMAPAsyncConnection * IMAPAsyncSession::sessionForFolder(String * folder, bool urgent)
 {
     if (folder == NULL) {
-        return matchingSessionForFolder(NULL);
+        return availableSession();
     }
     else {
         IMAPAsyncConnection * s = NULL;
-
-        // try find session with empty queue, selected to the folder
-        s = sessionWithMinQueue(true, folder);
-        if (s != NULL && s->operationsCount() == 0) {
-            s->setLastFolder(folder);
-            return s;
-        }
-
         if (urgent && mAllowsFolderConcurrentAccessEnabled) {
-            // in urgent mode try reuse any available session with
-            // empty queue or create new one, if maximum connections limit does not reached.
             s = availableSession();
             if (s->operationsCount() == 0) {
                 s->setLastFolder(folder);
@@ -309,7 +285,6 @@ IMAPAsyncConnection * IMAPAsyncSession::sessionForFolder(String * folder, bool u
             }
         }
 
-        // otherwise returns session with minimum size of queue among selected to the folder.
         s = matchingSessionForFolder(folder);
         s->setLastFolder(folder);
         return s;
@@ -318,74 +293,58 @@ IMAPAsyncConnection * IMAPAsyncSession::sessionForFolder(String * folder, bool u
 
 IMAPAsyncConnection * IMAPAsyncSession::availableSession()
 {
-    // try find existant session with empty queue for reusing.
-    IMAPAsyncConnection * chosenSession = sessionWithMinQueue(false, NULL);
-    if ((chosenSession != NULL) && (chosenSession->operationsCount() == 0)) {
-        return chosenSession;
-    }
-
-    // create new session, if maximum connections limit does not reached yet.
-    if ((mMaximumConnections == 0) || (mSessions->count() < mMaximumConnections)) {
-        chosenSession = session();
+    if (mMaximumConnections == 0) {
+        for(unsigned int i = 0 ; i < mSessions->count() ; i ++) {
+            IMAPAsyncConnection * s = (IMAPAsyncConnection *) mSessions->objectAtIndex(i);
+            if (s->operationsCount() == 0)
+                return s;
+        }
+        IMAPAsyncConnection * chosenSession = session();
         mSessions->addObject(chosenSession);
         return chosenSession;
     }
-
-    // otherwise returns existant session with minimum size of queue.
-    return chosenSession;
-}
-
-IMAPAsyncConnection * IMAPAsyncSession::matchingSessionForFolder(String * folder)
-{
-    IMAPAsyncConnection * s = NULL;
-    if (folder == NULL) {
-        // try find session with minimum size of queue among non-selected to the any folder.
-        s = sessionWithMinQueue(true, NULL);
-
-        if (s == NULL) {
-            // prefer to use INBOX-selected folders for commands does not tight to specific folder.
-            s = sessionWithMinQueue(true, MCSTR("INBOX"));
-        }
-    } else {
-        // try find session with minimum size of queue among selected to the folder.
-        s = sessionWithMinQueue(true, folder);
-
-        if (s == NULL) {
-            // try find session with minimum size of queue among non-selected to any folder ones.
-            s = sessionWithMinQueue(true, NULL);
-        }
-    }
-
-    if (s != NULL) {
-        return s;
-    }
-
-    // otherwise returns existant session with minumum size of queue or create new one.
-    return availableSession();
-}
-
-IMAPAsyncConnection * IMAPAsyncSession::sessionWithMinQueue(bool filterByFolder, String * folder)
-{
-    IMAPAsyncConnection * chosenSession = NULL;
-    unsigned int minOperationsCount = 0;
-
-    for (unsigned int i = 0 ; i < mSessions->count() ; i ++) {
-        IMAPAsyncConnection * s = (IMAPAsyncConnection *) mSessions->objectAtIndex(i);
-        if ((chosenSession == NULL) || (s->operationsCount() < minOperationsCount)) {
-            bool matched = true;
-            if (filterByFolder) {
-                // filter by last selested folder
-                matched = ((folder != NULL && s->lastFolder() != NULL && s->lastFolder()->isEqual(folder))
-                           || (folder == NULL && s->lastFolder() == NULL));
+    else {
+        IMAPAsyncConnection * chosenSession = NULL;
+        unsigned int minOperationsCount = 0;
+        for(unsigned int i = 0 ; i < mSessions->count() ; i ++) {
+            IMAPAsyncConnection * s = (IMAPAsyncConnection *) mSessions->objectAtIndex(i);
+            if (chosenSession == NULL) {
+                chosenSession = s;
+                minOperationsCount = s->operationsCount();
             }
-            if (matched) {
+            else if (s->operationsCount() < minOperationsCount) {
                 chosenSession = s;
                 minOperationsCount = s->operationsCount();
             }
         }
+        if (mSessions->count() < mMaximumConnections) {
+            if ((chosenSession != NULL) && (minOperationsCount == 0)) {
+                return chosenSession;
+            }
+            chosenSession = session();
+            mSessions->addObject(chosenSession);
+            return chosenSession;
+        }
+        else {
+            return chosenSession;
+        }
     }
+}
 
-    return chosenSession;
+IMAPAsyncConnection * IMAPAsyncSession::matchingSessionForFolder(String * folder)
+{
+    for(unsigned int i = 0 ; i < mSessions->count() ; i ++) {
+        IMAPAsyncConnection * currentSession = (IMAPAsyncConnection *) mSessions->objectAtIndex(i);
+        if (currentSession->lastFolder() != NULL) {
+            if (currentSession->lastFolder()->isEqual(folder)) {
+                return currentSession;
+            }
+        }
+        else {
+            return currentSession;
+        }
+    }
+    return availableSession();
 }
 
 IMAPFolderInfoOperation * IMAPAsyncSession::folderInfoOperation(String * folder)
@@ -482,32 +441,9 @@ IMAPAppendMessageOperation * IMAPAsyncSession::appendMessageOperation(String * f
     return op;
 }
 
-IMAPAppendMessageOperation * IMAPAsyncSession::appendMessageOperation(String * folder, String * messagePath, MessageFlag flags, Array * customFlags)
-{
-    IMAPAppendMessageOperation * op = new IMAPAppendMessageOperation();
-    op->setMainSession(this);
-    op->setFolder(folder);
-    op->setMessageFilepath(messagePath);
-    op->setFlags(flags);
-    op->setCustomFlags(customFlags);
-    op->autorelease();
-    return op;
-}
-
 IMAPCopyMessagesOperation * IMAPAsyncSession::copyMessagesOperation(String * folder, IndexSet * uids, String * destFolder)
 {
     IMAPCopyMessagesOperation * op = new IMAPCopyMessagesOperation();
-    op->setMainSession(this);
-    op->setFolder(folder);
-    op->setUids(uids);
-    op->setDestFolder(destFolder);
-    op->autorelease();
-    return op;
-}
-
-IMAPMoveMessagesOperation * IMAPAsyncSession::moveMessagesOperation(String * folder, IndexSet * uids, String * destFolder)
-{
-    IMAPMoveMessagesOperation * op = new IMAPMoveMessagesOperation();
     op->setMainSession(this);
     op->setFolder(folder);
     op->setUids(uids);
@@ -589,41 +525,12 @@ IMAPFetchContentOperation * IMAPAsyncSession::fetchMessageAttachmentByUIDOperati
     return op;
 }
 
-IMAPFetchContentToFileOperation * IMAPAsyncSession::fetchMessageAttachmentToFileByUIDOperation(
-                                                                                   String * folder, uint32_t uid, String * partID,
-                                                                                   Encoding encoding,
-                                                                                   String * filename,
-                                                                                   bool urgent)
-{
-    IMAPFetchContentToFileOperation * op = new IMAPFetchContentToFileOperation();
-    op->setMainSession(this);
-    op->setFolder(folder);
-    op->setUid(uid);
-    op->setPartID(partID);
-    op->setEncoding(encoding);
-    op->setFilename(filename);
-    op->setUrgent(urgent);
-    op->autorelease();
-    return op;
-}
-
 IMAPFetchContentOperation * IMAPAsyncSession::fetchMessageByNumberOperation(String * folder, uint32_t number, bool urgent)
 {
     IMAPFetchContentOperation * op = new IMAPFetchContentOperation();
     op->setMainSession(this);
     op->setFolder(folder);
     op->setNumber(number);
-    op->setUrgent(urgent);
-    op->autorelease();
-    return op;
-}
-
-IMAPCustomCommandOperation * IMAPAsyncSession::customCommand(String *command, bool urgent)
-{
-
-    IMAPCustomCommandOperation *op = new IMAPCustomCommandOperation();
-    op->setMainSession(this);
-    op->setCustomCommand(command);
     op->setUrgent(urgent);
     op->autorelease();
     return op;
@@ -771,7 +678,7 @@ IMAPOperation * IMAPAsyncSession::connectOperation()
     return op;
 }
 
-IMAPCheckAccountOperation * IMAPAsyncSession::checkAccountOperation()
+IMAPOperation * IMAPAsyncSession::checkAccountOperation()
 {
     IMAPCheckAccountOperation * op = new IMAPCheckAccountOperation();
     op->setMainSession(this);
@@ -872,7 +779,6 @@ void IMAPAsyncSession::automaticConfigurationDone(IMAPSession * session)
 {
     MC_SAFE_REPLACE_COPY(IMAPIdentity, mServerIdentity, session->serverIdentity());
     MC_SAFE_REPLACE_COPY(String, mGmailUserDisplayName, session->gmailUserDisplayName());
-    mIdleEnabled = session->isIdleEnabled();
     setDefaultNamespace(session->defaultNamespace());
     mAutomaticConfigurationDone = true;
 }

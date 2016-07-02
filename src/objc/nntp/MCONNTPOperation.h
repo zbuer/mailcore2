@@ -13,16 +13,11 @@
 #import <Foundation/Foundation.h>
 #import <MailCore/MCOOperation.h>
 
-/** Transmit a message using NNTP3 */
-
-typedef void (^MCONNTPOperationProgressBlock)(unsigned int current, unsigned int maximum);
-
 /**
  This is a generic asynchronous NNTP3 operation. 
  @see MCONNTPSession
  */
 
-NS_ASSUME_NONNULL_BEGIN
 @interface MCONNTPOperation : MCOOperation
 
 /** 
@@ -35,9 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
  - On failure, `error` will be set with `MCOErrorDomain` as domain and an 
  error code available in MCOConstants.h,
  */
-- (void) start:(void (^)(NSError * __nullable error))completionBlock;
+- (void) start:(void (^)(NSError * error))completionBlock;
 
 @end
-NS_ASSUME_NONNULL_END
 
 #endif

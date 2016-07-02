@@ -42,7 +42,7 @@
     return _nativeExpr;
 }
 
-- (instancetype) initWithMCExpression:(mailcore::IMAPSearchExpression *)expr
+- (id) initWithMCExpression:(mailcore::IMAPSearchExpression *)expr
 {
     self = [super init];
     

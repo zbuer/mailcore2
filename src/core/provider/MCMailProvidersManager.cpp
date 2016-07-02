@@ -30,28 +30,22 @@ MailProvidersManager * MailProvidersManager::sharedManager()
 
 MailProvider * MailProvidersManager::providerForEmail(String * email)
 {
-    MailProvider * result = NULL;
     mc_foreachhashmapValue(MailProvider, provider, mProviders) {
-        if (provider->matchEmail(email)) {
-            result = provider;
-            break;
-        }
+        if (provider->matchEmail(email))
+            return provider;
     }
     
-    return result;
+    return NULL;
 }
 
 MailProvider * MailProvidersManager::providerForMX(String * hostname)
 {
-    MailProvider * result = NULL;
     mc_foreachhashmapValue(MailProvider, provider, mProviders) {
-        if (provider->matchMX(hostname)) {
-            result = provider;
-            break;
-        }
+        if (provider->matchMX(hostname))
+            return provider;
     }
-
-    return result;
+    
+    return NULL;
 }
 
 MailProvider * MailProvidersManager::providerForIdentifier(String * identifier)

@@ -13,7 +13,6 @@
 #import <MailCore/MCOSMTPOperation.h>
 
 /** This is an asynchronous operation that will perform a noop operation through SMTP. */
-NS_ASSUME_NONNULL_BEGIN
 @interface MCOSMTPNoopOperation : MCOSMTPOperation
 
 /*
@@ -26,9 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
  - On failure, `error` will be set with `MCOErrorDomain` as domain and an
  error code available in MCOConstants.h,
  */
-- (void) start:(void (^)(NSError * __nullable error))completionBlock;
+- (void) start:(void (^)(NSError * error))completionBlock;
 
 @end
-NS_ASSUME_NONNULL_END
 
 #endif

@@ -161,42 +161,30 @@ bool MailProvider::matchEmail(String * email)
     
     domain = (String *) components->lastObject();
 
-    bool matchExcludeDomain = false;
     mc_foreacharray(String, exclude, mDomainExclude) {
         if (matchDomain(exclude, domain)){
-            matchExcludeDomain = true;;
-            break;
+            return false;
         }
     }
-    if (matchExcludeDomain) {
-        return false;
-    }
-
-    bool matchValidDomain = false;
+    
     mc_foreacharray(String, match, mDomainMatch) {
         if (matchDomain(match, domain)){
-            matchValidDomain = true;
-            break;
+            return true;
         }
     }
-    if (matchValidDomain) {
-        return true;
-    }
-
+    
     return false;
 }
 
 bool MailProvider::matchMX(String * hostname)
 {
-    bool result = false;
     mc_foreacharray(String, match, mMxMatch) {
         if (matchDomain(match, hostname)){
-            result = true;
-            break;
+            return true;
         }
     }
-
-    return result;
+    
+    return false;
 }
 
 bool MailProvider::matchDomain(String * match, String * domain)
@@ -249,56 +237,41 @@ bool MailProvider::matchDomain(String * match, String * domain)
 
 String * MailProvider::sentMailFolderPath()
 {
-    if (mMailboxPaths == NULL)
-        return NULL;
     return (String *) mMailboxPaths->objectForKey(MCSTR("sentmail"));
 }
 
 String * MailProvider::starredFolderPath()
 {
-    if (mMailboxPaths == NULL)
-        return NULL;
     return (String *) mMailboxPaths->objectForKey(MCSTR("starred"));
 }
 
 String * MailProvider::allMailFolderPath()
 {
-    if (mMailboxPaths == NULL)
-        return NULL;
     return (String *) mMailboxPaths->objectForKey(MCSTR("allmail"));
 }
 
 String * MailProvider::trashFolderPath()
 {
-    if (mMailboxPaths == NULL)
-        return NULL;
     return (String *) mMailboxPaths->objectForKey(MCSTR("trash"));
 }
 
 String * MailProvider::draftsFolderPath()
 {
-    if (mMailboxPaths == NULL)
-        return NULL;
     return (String *) mMailboxPaths->objectForKey(MCSTR("drafts"));
 }
 
 String * MailProvider::spamFolderPath()
 {
-    if (mMailboxPaths == NULL)
-        return NULL;
     return (String *) mMailboxPaths->objectForKey(MCSTR("spam"));
 }
 
 String * MailProvider::importantFolderPath()
 {
-    if (mMailboxPaths == NULL)
-        return NULL;
     return (String *) mMailboxPaths->objectForKey(MCSTR("important"));
 }
 
 bool MailProvider::isMainFolder(String * folderPath, String * prefix)
 {
-    bool result = false;
     mc_foreachhashmapValue(String, path, mMailboxPaths) {
         String * fullPath;
         
@@ -309,13 +282,11 @@ bool MailProvider::isMainFolder(String * folderPath, String * prefix)
             fullPath = path;
         }
         
-        if (fullPath->isEqual(folderPath)) {
-            result = true;
-            break;
-        }
+        if (fullPath->isEqual(folderPath))
+            return true;
     }
     
-    return result;
+    return false;
 }
 
 String * MailProvider::description()

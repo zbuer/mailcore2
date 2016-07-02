@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
 #include <pthread.h>
 #if USE_UCHARDET
 #include <uchardet/uchardet.h>
@@ -28,7 +27,6 @@
 #include "MCBase64.h"
 #include "MCSet.h"
 #include "MCLock.h"
-#include "MCDataDecoderUtils.h"
 
 #define MCDATA_DEFAULT_CHARSET "iso-8859-1"
 
@@ -41,25 +39,6 @@ static int isPowerOfTwo (unsigned int x)
 
 void Data::allocate(unsigned int length, bool force)
 {
-    if (mExternallyAllocatedMemory) {
-        // We don't know how this memory was allocated.
-        // Possibly this memory is readonly.
-        // So we need fallback to malloc'ed implementation.
-
-        unsigned int bytes_len = 0;
-        char * bytes = NULL;
-        if (mBytes) {
-            bytes_len = mLength;
-            bytes = (char *) malloc(mLength);
-            memcpy(bytes, mBytes, mLength);
-        }
-
-        reset();
-        mBytes = bytes;
-        mLength = bytes_len;
-        mAllocated = bytes_len;
-    }
-
     if (length <= mAllocated)
         return;
 
@@ -83,46 +62,37 @@ void Data::allocate(unsigned int length, bool force)
 
 void Data::reset()
 {
-    if (mExternallyAllocatedMemory) {
-        if (mBytes && mBytesDeallocator) {
-            mBytesDeallocator(mBytes, mLength);
-        }
-    } else {
-        free(mBytes);
-    }
-    init();
-}
-
-void Data::init()
-{
+    free(mBytes);
     mAllocated = 0;
     mLength = 0;
     mBytes = NULL;
-    mExternallyAllocatedMemory = false;
-    mBytesDeallocator = NULL;
 }
 
 Data::Data()
 {
-    init();
+    mBytes = NULL;
+    reset();
 }
 
 Data::Data(Data * otherData) : Object()
 {
-    init();
+    mBytes = NULL;
+    reset();
     appendData(otherData);
 }
 
 Data::Data(const char * bytes, unsigned int length)
 {
-    init();
+    mBytes = NULL;
+    reset();
     allocate(length, true);
     appendBytes(bytes, length);
 }
 
 Data::Data(int capacity)
 {
-    init();
+    mBytes = NULL;
+    reset();
     allocate(capacity, true);
 }
 
@@ -145,11 +115,6 @@ char * Data::bytes()
 unsigned int Data::length()
 {
     return mLength;
-}
-
-void Data::increaseCapacity(unsigned int length)
-{
-    allocate(mLength + length);
 }
 
 void Data::appendData(Data * otherData)
@@ -519,27 +484,20 @@ String * Data::charsetWithFilteredHTML(bool filterHTML, String * hintCharset)
 #endif
 }
 
-void Data::takeBytesOwnership(char * bytes, unsigned int length, BytesDeallocator bytesDeallocator)
+void Data::takeBytesOwnership(char * bytes, unsigned int length)
 {
-    reset();
-    mBytes = bytes;
+    free(mBytes);
+    mBytes = (char *) bytes;
     mLength = length;
-    mAllocated = length;
-    mExternallyAllocatedMemory = true;
-    mBytesDeallocator = bytesDeallocator;
-}
-
-static void mmapDeallocator(char * bytes, unsigned int length) {
-    if (bytes) {
-        munmap(bytes, length);
-    }
 }
 
 Data * Data::dataWithContentsOfFile(String * filename)
 {
     int r;
+    size_t read_items;
     struct stat stat_buf;
     FILE * f;
+    char * buf;
     Data * data;
     
     f = fopen(filename->fileSystemRepresentation(), "rb");
@@ -552,24 +510,181 @@ Data * Data::dataWithContentsOfFile(String * filename)
         fclose(f);
         return NULL;
     }
-
-    unsigned int length = (unsigned int)stat_buf.st_size;
-    void * bytes = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fileno(f), 0);
-    fclose(f);
-
-    if (bytes == MAP_FAILED) {
+    
+    buf = (char *) malloc((size_t) stat_buf.st_size);
+    
+    read_items = fread(buf, 1, (size_t)  stat_buf.st_size, f);
+    if ((off_t) read_items != stat_buf.st_size) {
+        free(buf);
+        fclose(f);
         return NULL;
     }
     
     data = Data::data();
-    data->takeBytesOwnership((char *)bytes, length, mmapDeallocator);
+    data->takeBytesOwnership(buf, (unsigned int) stat_buf.st_size);
+    
+    fclose(f);
+    
     return data;
+}
+
+static size_t uudecode(char * text, size_t size)
+{
+    unsigned int count = 0;
+    char *b = text;		/* beg */
+    char *s = b;			/* src */
+    char *d = b;			/* dst */
+    char *e = b+size;			/* end */
+    int out = (*s++ & 0x7f) - 0x20;
+    
+    /* don't process lines without leading count character */
+    if (out < 0)
+        return size;
+    
+    /* don't process begin and end lines */
+    if ((strncasecmp((const char *)b, "begin ", 6) == 0) ||
+        (strncasecmp((const char *)b, "end",    3) == 0))
+        return size;
+    
+    //while (s < e - 4)
+    while (s < e)
+    {
+        int v = 0;
+        int i;
+        for (i = 0; i < 4; i += 1) {
+            char c = *s++;
+            v = v << 6 | ((c - 0x20) & 0x3F);
+        }
+        for (i = 2; i >= 0; i -= 1) {
+            char c = (char) (v & 0xFF);
+            d[i] = c;
+            v = v >> 8;
+        }
+        d += 3;
+        count += 3;
+    }
+    *d = (char) '\0';
+    return count;
 }
 
 Data * Data::decodedDataUsingEncoding(Encoding encoding)
 {
-    Data * unused = NULL;
-    return MCDecodeData(this, encoding, false, &unused);
+    const char * text;
+    size_t text_length;
+    
+    text = bytes();
+    text_length = length();
+    
+    switch (encoding) {
+        case Encoding7Bit:
+        case Encoding8Bit:
+        case EncodingBinary:
+        case EncodingOther:
+        default:
+        {
+            return this;
+        }
+        case EncodingBase64:
+        case EncodingQuotedPrintable:
+        {
+            char * decoded;
+            size_t decoded_length;
+            size_t cur_token;
+            int mime_encoding;
+            Data * data;
+            
+            switch (encoding) {
+                default: //disable warning
+                case EncodingBase64:
+                    mime_encoding = MAILMIME_MECHANISM_BASE64;
+                    break;
+                case EncodingQuotedPrintable:
+                    mime_encoding = MAILMIME_MECHANISM_QUOTED_PRINTABLE;
+                    break;
+            }
+            
+            cur_token = 0;
+            mailmime_part_parse(text, text_length, &cur_token,
+                                mime_encoding, &decoded, &decoded_length);
+            data = Data::dataWithBytes(decoded, (unsigned int) decoded_length);
+            mailmime_decoded_part_free(decoded);
+            return data;
+        }
+        case EncodingUUEncode:
+        {
+            char * dup_data;
+            size_t decoded_length;
+            Data * data;
+            char * current_p;
+            
+            data = Data::dataWithCapacity((unsigned int) text_length);
+            
+            dup_data = (char *) malloc(text_length);
+            memcpy(dup_data, text, text_length);
+            
+            current_p = dup_data;
+            while (1) {
+                size_t length;
+                char * p;
+                char * p1;
+                char * p2;
+                char * end_line;
+                
+                p1 = strchr(current_p, '\n');
+                p2 = strchr(current_p, '\r');
+                if (p1 == NULL) {
+                    p = p2;
+                }
+                else if (p2 == NULL) {
+                    p = p1;
+                }
+                else {
+                    if (p1 - current_p < p2 - current_p) {
+                        p = p1;
+                    }
+                    else {
+                        p = p2;
+                    }
+                }
+                end_line = p;
+                if (p != NULL) {
+                    while ((size_t) (p - dup_data) < text_length) {
+                        if ((* p != '\r') && (* p != '\n')) {
+                            break;
+                        }
+                        p ++;
+                    }
+                }
+                if (p == NULL) {
+                    length = text_length - (current_p - dup_data);
+                }
+                else {
+                    length = end_line - current_p;
+                }
+                if (length == 0) {
+                    break;
+                }
+                decoded_length = uudecode(current_p, length);
+                if (decoded_length != 0 && decoded_length < length) {
+                    data->appendBytes(current_p, (unsigned int) decoded_length);
+                }
+                
+                if (p == NULL)
+                    break;
+                
+                current_p = p;
+                while ((size_t) (current_p - dup_data) < text_length) {
+                    if ((* current_p != '\r') && (* current_p != '\n')) {
+                        break;
+                    }
+                    current_p ++;
+                }
+            }
+            free(dup_data);
+            
+            return data;
+        }
+    }
 }
 
 Data * Data::data()
@@ -606,14 +721,11 @@ void Data::importSerializable(HashMap * serializable)
 ErrorCode Data::writeToFile(String * filename)
 {
     FILE * f = fopen(filename->fileSystemRepresentation(), "wb");
-
     if (f == NULL) {
         return ErrorFile;
     }
     size_t result = fwrite(bytes(), length(), 1, f);
-    if (fclose(f) != 0) {
-        return ErrorFile;
-    }
+    fclose(f);
     if (result == 0) {
         return ErrorFile;
     }

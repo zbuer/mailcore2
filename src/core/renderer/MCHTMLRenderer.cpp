@@ -16,7 +16,7 @@
 
 using namespace mailcore;
 
-class HTMLRendererIMAPDummyCallback : public HTMLRendererIMAPCallback, public HTMLRendererRFC822Callback {
+class HTMLRendererIMAPDummyCallback : public HTMLRendererIMAPCallback {
 private:
     Array *mRequiredParts;
     
@@ -44,12 +44,6 @@ public:
         return mRequiredParts;
     }
 
-    virtual Data * dataForRFC822Part(String * folder, Attachment * part)
-    {
-        mRequiredParts->addObject(part);
-        return Data::data();
-    }
-
 };
 
 enum {
@@ -59,8 +53,7 @@ enum {
 };
 
 struct htmlRendererContext {
-    HTMLRendererIMAPCallback * imapDataCallback;
-    HTMLRendererRFC822Callback * rfc822DataCallback;
+    HTMLRendererIMAPCallback * dataCallback;
     HTMLRendererTemplateCallback * htmlCallback;
     int firstRendered;
     String * folder;
@@ -89,7 +82,6 @@ static String * renderTemplate(String * templateContent, HashMap * values);
 
 static String * htmlForAbstractMessage(String * folder, AbstractMessage * message,
                                        HTMLRendererIMAPCallback * dataCallback,
-                                       HTMLRendererRFC822Callback * rfc822DataCallback,
                                        HTMLRendererTemplateCallback * htmlCallback,
                                        Array * attachments,
                                        Array * relatedAttachments);
@@ -184,8 +176,7 @@ static bool messagePartContainsMimeType(AbstractMessagePart * part, String * mim
 }
 
 static String * htmlForAbstractMessage(String * folder, AbstractMessage * message,
-                                       HTMLRendererIMAPCallback * imapDataCallback,
-                                       HTMLRendererRFC822Callback * rfc822DataCallback,
+                                       HTMLRendererIMAPCallback * dataCallback,
                                        HTMLRendererTemplateCallback * htmlCallback,
                                        Array * attachments,
                                        Array * relatedAttachments)
@@ -203,16 +194,10 @@ static String * htmlForAbstractMessage(String * folder, AbstractMessage * messag
     else if (message->className()->isEqual(MCSTR("mailcore::MessageParser"))) {
         mainPart = ((MessageParser *) message)->mainPart();
     }
-    if (mainPart == NULL) {
-        // needs a mainPart.
-        return NULL;
-    }
-
     MCAssert(mainPart != NULL);
     
     htmlRendererContext context;
-    context.imapDataCallback = imapDataCallback;
-    context.rfc822DataCallback = rfc822DataCallback;
+    context.dataCallback = dataCallback;
     context.htmlCallback = htmlCallback;
     context.relatedAttachments = NULL;
     context.attachments = NULL;
@@ -325,15 +310,10 @@ static String * htmlForAbstractSinglePart(AbstractPart * part, htmlRendererConte
             String * charset = part->charset();
             Data * data = NULL;
             if (part->className()->isEqual(MCSTR("mailcore::IMAPPart"))) {
-                data = context->imapDataCallback->dataForIMAPPart(context->folder, (IMAPPart *) part);
+                data = context->dataCallback->dataForIMAPPart(context->folder, (IMAPPart *) part);
             }
             else if (part->className()->isEqual(MCSTR("mailcore::Attachment"))) {
                 data = ((Attachment *) part)->data();
-                if (data == NULL) {
-                    // It may be NULL when mailcore::MessageParser::attachments() is invoked when
-                    // when mailcore::MessageParser has been serialized/unserialized.
-                    data = context->rfc822DataCallback->dataForRFC822Part(context->folder, (Attachment *) part);
-                }
                 MCAssert(data != NULL);
             }
             if (data == NULL)
@@ -341,7 +321,6 @@ static String * htmlForAbstractSinglePart(AbstractPart * part, htmlRendererConte
             
             String * str = data->stringWithDetectedCharset(charset, false);
             str = str->htmlMessageContent();
-            str = context->htmlCallback->filterHTMLForPart(str);
             context->firstRendered = true;
             return str;
         }
@@ -349,15 +328,12 @@ static String * htmlForAbstractSinglePart(AbstractPart * part, htmlRendererConte
             String * charset = part->charset();
             Data * data = NULL;
             if (part->className()->isEqual(MCSTR("mailcore::IMAPPart"))) {
-                data = context->imapDataCallback->dataForIMAPPart(context->folder, (IMAPPart *) part);
+                data = context->dataCallback->dataForIMAPPart(context->folder, (IMAPPart *) part);
             }
             else if (part->className()->isEqual(MCSTR("mailcore::Attachment"))) {
                 data = ((Attachment *) part)->data();
-                if (data == NULL) {
-                    // It may be NULL when mailcore::MessageParser::attachments() is invoked when
-                    // when mailcore::MessageParser has been serialized/unserialized.
-                    data = context->rfc822DataCallback->dataForRFC822Part(context->folder, (Attachment *) part);
-                }
+                // It may be NULL when mailcore::MessageParser::attachments() is invoked when
+                // when mailcore::MessageParser has been serialized/unserialized.
             }
             if (data == NULL)
                 return NULL;
@@ -404,7 +380,7 @@ static String * htmlForAbstractSinglePart(AbstractPart * part, htmlRendererConte
         
         if (context->htmlCallback->canPreviewPart(part)) {
             if (part->className()->isEqual(MCSTR("mailcore::IMAPPart"))) {
-                context->imapDataCallback->prefetchImageIMAPPart(context->folder, (IMAPPart *) part);
+                context->dataCallback->prefetchImageIMAPPart(context->folder, (IMAPPart *) part);
             }
             String * url = String::stringWithUTF8Format("x-mailcore-image:%s",
                                                                             part->uniqueID()->UTF8Characters());
@@ -414,7 +390,7 @@ static String * htmlForAbstractSinglePart(AbstractPart * part, htmlRendererConte
         }
         else {
             if (part->className()->isEqual(MCSTR("mailcore::IMAPPart"))) {
-                context->imapDataCallback->prefetchAttachmentIMAPPart(context->folder, (IMAPPart *) part);
+                context->dataCallback->prefetchAttachmentIMAPPart(context->folder, (IMAPPart *) part);
             }
             HashMap * values = context->htmlCallback->templateValuesForPart(part);
             content = renderTemplate(context->htmlCallback->templateForAttachment(part), values);
@@ -575,10 +551,9 @@ static String * renderTemplate(String * templateContent, HashMap * values)
 }
 
 String * HTMLRenderer::htmlForRFC822Message(MessageParser * message,
-                                            HTMLRendererRFC822Callback * dataCallback,
                                             HTMLRendererTemplateCallback * htmlCallback)
 {
-    return htmlForAbstractMessage(NULL, message, NULL, dataCallback, htmlCallback, NULL, NULL);
+    return htmlForAbstractMessage(NULL, message, NULL, htmlCallback, NULL, NULL);
 }
 
 String * HTMLRenderer::htmlForIMAPMessage(String * folder,
@@ -586,14 +561,14 @@ String * HTMLRenderer::htmlForIMAPMessage(String * folder,
                                           HTMLRendererIMAPCallback * dataCallback,
                                           HTMLRendererTemplateCallback * htmlCallback)
 {
-    return htmlForAbstractMessage(folder, message, dataCallback, NULL, htmlCallback, NULL, NULL);
+    return htmlForAbstractMessage(folder, message, dataCallback, htmlCallback, NULL, NULL);
 }
 
 Array * HTMLRenderer::attachmentsForMessage(AbstractMessage * message)
 {
     Array * attachments = Array::array();
-    HTMLRendererIMAPDummyCallback * dataCallback = new HTMLRendererIMAPDummyCallback();
-    String * ignoredResult = htmlForAbstractMessage(NULL, message, dataCallback, dataCallback, NULL, attachments, NULL);
+    HTMLRendererIMAPCallback * dataCallback = new HTMLRendererIMAPDummyCallback();
+    String * ignoredResult = htmlForAbstractMessage(NULL, message, dataCallback, NULL, attachments, NULL);
     delete dataCallback;
     dataCallback = NULL;
     (void) ignoredResult; // remove unused variable warning.
@@ -603,8 +578,8 @@ Array * HTMLRenderer::attachmentsForMessage(AbstractMessage * message)
 Array * HTMLRenderer::htmlInlineAttachmentsForMessage(AbstractMessage * message)
 {
     Array * htmlInlineAttachments = Array::array();
-    HTMLRendererIMAPDummyCallback * dataCallback = new HTMLRendererIMAPDummyCallback();
-    String * ignoredResult = htmlForAbstractMessage(NULL, message, dataCallback, dataCallback, NULL, NULL, htmlInlineAttachments);
+    HTMLRendererIMAPCallback * dataCallback = new HTMLRendererIMAPDummyCallback();
+    String * ignoredResult = htmlForAbstractMessage(NULL, message, dataCallback, NULL, NULL, htmlInlineAttachments);
     delete dataCallback;
     dataCallback = NULL;
     (void) ignoredResult; // remove unused variable warning.
@@ -614,7 +589,7 @@ Array * HTMLRenderer::htmlInlineAttachmentsForMessage(AbstractMessage * message)
 Array * HTMLRenderer::requiredPartsForRendering(AbstractMessage * message)
 {
     HTMLRendererIMAPDummyCallback * dataCallback = new HTMLRendererIMAPDummyCallback();
-    String * ignoredResult = htmlForAbstractMessage(NULL, message, dataCallback, dataCallback, NULL, NULL, NULL);
+    String * ignoredResult = htmlForAbstractMessage(NULL, message, dataCallback, NULL, NULL, NULL);
     
     Array *requiredParts = dataCallback->requiredParts();
     

@@ -12,7 +12,6 @@ static chash * cppClassHash = NULL;
 static chash * javaClassHash = NULL;
 
 #define RANGE_MAX (1ULL >> 63ULL - 1ULL)
-#define LOCAL_FRAME_CAPACITY 32
 
 static void init(void);
 static void real_init(void);
@@ -221,13 +220,11 @@ static jobject hashmapObjectToJavaConverter(JNIEnv * env, Object * obj)
     jmethodID method = env->GetMethodID(cls, "put", "(Ljava/lang/Object;Ljava/lang/Object;)V");
     Array * keys = hashMap->allKeys();
     for(unsigned int i = 0 ; i < keys->count() ; i ++) {
-        env->PushLocalFrame(LOCAL_FRAME_CAPACITY);
         Object * key = keys->objectAtIndex(i);
         jobject javaKey = mcObjectToJava(env, key);
         Object * value = hashMap->objectForKey(key);
         jobject javaValue = mcObjectToJava(env, value);
         env->CallVoidMethod(javaHashMap, method, javaKey, javaValue);
-        env->PopLocalFrame(NULL);
     }
     return javaHashMap;
 }
@@ -241,13 +238,11 @@ static jobject arrayObjectToJavaConverter(JNIEnv * env, Object * obj)
     jmethodID method = env->GetMethodID(cls, "add", "(Ljava/lang/Object;)Z");
     MCLog("add method %p", method);
     for(unsigned int i = 0 ; i < array->count() ; i ++) {
-        env->PushLocalFrame(LOCAL_FRAME_CAPACITY);
         MCLog("converting object %s", MCUTF8(array->objectAtIndex(i)));
         jobject javaObject = mcObjectToJava(env, array->objectAtIndex(i));
         MCLog("add object %p", javaObject);
         env->CallBooleanMethod(javaVector, method, javaObject);
         MCLog("added object %p", javaObject);
-        env->PopLocalFrame(NULL);
     }
     MCLog("array converted");
     return javaVector;
@@ -343,29 +338,25 @@ static bool isJavaMap(JNIEnv * env, jobject obj)
 
 static Object * hashmapJavaToObjectConverter(JNIEnv * env, jobject obj)
 {
-    env->PushLocalFrame(LOCAL_FRAME_CAPACITY);
     HashMap * result = HashMap::hashMap();
     jclass javaClass = env->GetObjectClass(obj);
     jmethodID method = env->GetMethodID(javaClass, "entrySet", "()Ljava/util/Set;");
     jobject entrySet = (jobjectArray) env->CallObjectMethod(obj, method);
     javaClass = env->GetObjectClass(entrySet);
     method = env->GetMethodID(javaClass, "toArray", "()[Ljava/lang/Object;");
-    jobjectArray array = (jobjectArray) env->CallObjectMethod(entrySet, method);
+    jobjectArray array = (jobjectArray) env->CallObjectMethod(obj, method);
     int count = (int) env->GetArrayLength(array);
     for(int i = 0 ; i < count ; i ++) {
-        env->PushLocalFrame(LOCAL_FRAME_CAPACITY);
         jobject entry = env->GetObjectArrayElement(array, i);
         javaClass = env->GetObjectClass(entry);
         method = env->GetMethodID(javaClass, "getKey", "()Ljava/lang/Object;");
-        jobject key = env->CallObjectMethod(entry, method);
+        jobject key = env->CallObjectMethod(obj, method);
         Object * mcKey = javaToMCObject(env, key);
         method = env->GetMethodID(javaClass, "getValue", "()Ljava/lang/Object;");
-        jobject value = env->CallObjectMethod(entry, method);
+        jobject value = env->CallObjectMethod(obj, method);
         Object * mcValue = javaToMCObject(env, value);
         result->setObjectForKey(mcKey, mcValue);
-        env->PopLocalFrame(NULL);
     }
-    env->PopLocalFrame(NULL);
     return result;
 }
 
@@ -377,7 +368,6 @@ static bool isJavaList(JNIEnv * env, jobject obj)
 
 static Object * arrayJavaToObjectConverter(JNIEnv * env, jobject obj)
 {
-    env->PushLocalFrame(LOCAL_FRAME_CAPACITY);
     Array * result = Array::array();
     jclass javaClass = env->GetObjectClass(obj);
     jmethodID method = env->GetMethodID(javaClass, "toArray", "()[Ljava/lang/Object;");
@@ -386,10 +376,8 @@ static Object * arrayJavaToObjectConverter(JNIEnv * env, jobject obj)
     for(int i = 0 ; i < count ; i ++) {
         jobject item = env->GetObjectArrayElement(array, i);
         Object * mcItem = javaToMCObject(env, item);
-        env->DeleteLocalRef(item);
         result->addObject(mcItem);
     }
-    env->PopLocalFrame(NULL);
     return result;
 }
 
@@ -446,11 +434,10 @@ Object * mailcore::javaToMCObject(JNIEnv * env, jobject obj)
     else if (isJavaMap(env, obj)) {
         return hashmapJavaToObjectConverter(env, obj);
     }
-    else if (isJavaList(env, obj)) {
+    else if (isJavaMap(env, obj)) {
         return arrayJavaToObjectConverter(env, obj);
     }
     else {
-        env->PushLocalFrame(LOCAL_FRAME_CAPACITY);
         Object * result = NULL;
         
         jclass javaClass = env->GetObjectClass(obj);
@@ -474,8 +461,7 @@ Object * mailcore::javaToMCObject(JNIEnv * env, jobject obj)
             MCAssert(0);
         }
         env->ReleaseStringUTFChars(strObj, str);
-        env->PopLocalFrame(NULL);
-
+        
         return result;
     }
 }

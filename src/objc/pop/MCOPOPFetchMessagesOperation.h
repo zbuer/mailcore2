@@ -15,7 +15,6 @@
 
 /** This is an asynchronous operation that will fetch the list of a messages on the POP3 account. */
 
-NS_ASSUME_NONNULL_BEGIN
 @interface MCOPOPFetchMessagesOperation : MCOPOPOperation
 
 /** 
@@ -26,11 +25,10 @@ NS_ASSUME_NONNULL_BEGIN
  - On success `error` will be nil and `messages` will be an array of MCOPOPMessageInfo
  
  - On failure, `error` will be set with `MCOErrorDomain` as domain and an 
-   error code available in MCOConstants.h, `messages` will be nil
+   error code available in MCOConstants.h, `messages` will be null
 */
-- (void) start:(void (^)(NSError * __nullable error, NSArray * /* MCOPOPMessageInfo */__nullable messages))completionBlock;
+- (void) start:(void (^)(NSError * error, NSArray * /* MCOPOPMessageInfo */ messages))completionBlock;
 
 @end
-NS_ASSUME_NONNULL_END
 
 #endif

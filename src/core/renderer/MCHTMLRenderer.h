@@ -21,12 +21,10 @@ namespace mailcore {
     class MessageParser;
     class HTMLRendererTemplateCallback;
     class HTMLRendererIMAPCallback;
-    class HTMLRendererRFC822Callback;
     
     class MAILCORE_EXPORT HTMLRenderer {
     public:
         static String * htmlForRFC822Message(MessageParser * message,
-                                             HTMLRendererRFC822Callback * dataCallback,
                                              HTMLRendererTemplateCallback * htmlCallback);
         
         static String * htmlForIMAPMessage(String * folder,

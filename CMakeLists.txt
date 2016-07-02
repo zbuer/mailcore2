@@ -10,17 +10,12 @@ IF(APPLE)
     "${CMAKE_CURRENT_SOURCE_DIR}/Externals/libetpan-osx/lib"
   )
   
-  execute_process(COMMAND xcrun --sdk macosx --show-sdk-path OUTPUT_VARIABLE sdkpath)
-  string(STRIP "${sdkpath}" sdkpath)
   set(additional_includes
     "${CMAKE_CURRENT_SOURCE_DIR}/Externals/ctemplate-osx/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/Externals/libetpan-osx/include"
     /usr/include/tidy
     /usr/include/libxml2
-    "${sdkpath}/usr/include/tidy"
-    "${sdkpath}/usr/include/libxml2"
   )
-  message(STATUS "${additional_includes}")
   
   set(mac_libraries iconv)
   
@@ -69,9 +64,6 @@ if(NOT APPLE)
   
 endif()
 
-IF(ANDROID)
-  message(STATUS "Android platform")
-ELSE()
 
 # detect ctemplate
 
@@ -175,8 +167,6 @@ if(NOT ZLIB_INCLUDE_DIR OR NOT ZLIB_LIBRARY)
 else()
   message(STATUS "Found zlib")
 endif()
-
-ENDIF() # Android platform
 
 add_subdirectory (src)
 add_subdirectory (tests)

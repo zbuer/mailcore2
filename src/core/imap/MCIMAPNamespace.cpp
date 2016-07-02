@@ -1,6 +1,5 @@
 #include "MCIMAPNamespace.h"
 
-#include "MCDefines.h"
 #include "MCIMAPNamespaceItem.h"
 
 #include <libetpan/libetpan.h>
@@ -155,14 +154,4 @@ void IMAPNamespace::importSerializable(HashMap * serializable)
 {
     Array * items = (Array *) Object::objectWithSerializable((HashMap *) serializable->objectForKey(MCSTR("items")));
     MC_SAFE_REPLACE_RETAIN(Array, mItems, items);
-}
-
-static void * createObject()
-{
-    return new IMAPNamespace();
-}
-
-INITIALIZE(IMAPNamespace)
-{
-    Object::registerObjectConstructor("mailcore::IMAPNamespace", &createObject);
 }

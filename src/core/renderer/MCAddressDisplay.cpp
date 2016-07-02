@@ -10,38 +10,15 @@
 
 using namespace mailcore;
 
-String * AddressDisplay::sanitizeDisplayName(String * displayName)
-{
-    if (displayName->hasPrefix(MCSTR("\"")) && displayName->hasSuffix(MCSTR("\""))) {
-        String * unquotedDisplayName = displayName->substringWithRange(RangeMake(1, displayName->length() - 2));
-        if (unquotedDisplayName->locationOfString(MCSTR("\"")) != -1) {
-            return displayName;
-        }
-        else {
-            return unquotedDisplayName;
-        }
-    }
-    else {
-        return displayName;
-    }
-}
-
 String * AddressDisplay::displayStringForAddress(Address * address)
 {
-    if (address->displayName() != NULL) {
-        return String::stringWithUTF8Format("%s <%s>",
-                                            MCUTF8(AddressDisplay::sanitizeDisplayName(address->displayName())),
-                                            MCUTF8(address->mailbox()));
-    }
-    else {
-        return address->mailbox();
-    }
+    return address->nonEncodedRFC822String();
 }
 
 String * AddressDisplay::shortDisplayStringForAddress(Address * address)
 {
     if ((address->displayName() != NULL) && (address->displayName()->length() > 0)) {
-        return sanitizeDisplayName(address->displayName());
+        return address->displayName();
     }
     else if (address->mailbox()) {
         return address->mailbox();
@@ -57,7 +34,7 @@ String * AddressDisplay::veryShortDisplayStringForAddress(Address * address)
         Array * components;
         String * senderName;
         
-        senderName = sanitizeDisplayName(address->displayName());
+        senderName = address->displayName();
         senderName = (String *) senderName->copy()->autorelease();
         
         senderName->replaceOccurrencesOfString(MCSTR(","), MCSTR(" "));
@@ -83,18 +60,7 @@ String * AddressDisplay::veryShortDisplayStringForAddress(Address * address)
 
 String * AddressDisplay::displayStringForAddresses(Array * addresses)
 {
-    String * result = String::string();
-    if (addresses == NULL) {
-        return result;
-    }
-    for(unsigned int i = 0 ; i < addresses->count() ; i ++) {
-        Address * address = (Address *) addresses->objectAtIndex(i);
-        if (i != 0) {
-            result->appendString(MCSTR(", "));
-        }
-        result->appendString(AddressDisplay::displayStringForAddress(address));
-    }
-    return result;
+    return Address::nonEncodedRFC822StringForAddresses(addresses);
 }
 
 String * AddressDisplay::shortDisplayStringForAddresses(Array * addresses)
