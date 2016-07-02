@@ -10,7 +10,6 @@
 
 #include "MCIMAP.h"
 
-#import "MCOAbstractMessage+Private.h"
 #import "MCOUtils.h"
 #import "MCOAbstractMessageRendererCallback.h"
 #import "MCOHTMLRendererDelegate.h"
@@ -25,7 +24,7 @@
     MCORegisterClass(self, &typeid(nativeType));
 }
 
-- (id) init
+- (instancetype) init
 {
     mailcore::IMAPMessage * msg = new mailcore::IMAPMessage();
     self = [self initWithMCMessage:msg];

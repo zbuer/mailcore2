@@ -27,8 +27,10 @@
 #import <MailCore/MCOIMAPFolderStatus.h>
 #import <MailCore/MCOIMAPAppendMessageOperation.h>
 #import <MailCore/MCOIMAPCopyMessagesOperation.h>
+#import <MailCore/MCOIMAPMoveMessagesOperation.h>
 #import <MailCore/MCOIMAPFetchMessagesOperation.h>
 #import <MailCore/MCOIMAPFetchContentOperation.h>
+#import <MailCore/MCOIMAPFetchContentToFileOperation.h>
 #import <MailCore/MCOIMAPFetchParsedContentOperation.h>
 #import <MailCore/MCOIMAPSearchOperation.h>
 #import <MailCore/MCOIMAPIdleOperation.h>
@@ -41,5 +43,6 @@
 #import <MailCore/MCOIMAPQuotaOperation.h>
 #import <MailCore/MCOIMAPSearchExpression.h>
 #import <MailCore/MCOIMAPMessageRenderingOperation.h>
+#import <MailCore/MCOIMAPCustomCommandOperation.h>
 
 #endif

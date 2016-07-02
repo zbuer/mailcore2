@@ -12,9 +12,10 @@
 
 #include <MailCore/MCObject.h>
 #include <MailCore/MCRange.h>
-#include <inttypes.h>
 
 #ifdef __cplusplus
+
+#include <inttypes.h>
 
 namespace mailcore {
     
@@ -50,7 +51,8 @@ namespace mailcore {
         virtual Object * copy();
         virtual HashMap * serializable();
         virtual void importSerializable(HashMap * serializable);
-        
+        virtual bool isEqual(Object * otherObject);
+
     private:
         Range * mRanges;
         unsigned int mCount;

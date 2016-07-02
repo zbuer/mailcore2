@@ -44,7 +44,7 @@ MCO_SYNTHESIZE_NSCODING
     return _indexSet;
 }
 
-- (id) init
+- (instancetype) init
 {
     mailcore::IndexSet * indexSet = new mailcore::IndexSet();
     self = [self initWithMCIndexSet:indexSet];
@@ -52,7 +52,7 @@ MCO_SYNTHESIZE_NSCODING
     return self;
 }
 
-- (id) initWithMCIndexSet:(mailcore::IndexSet *)indexSet
+- (instancetype) initWithMCIndexSet:(mailcore::IndexSet *)indexSet
 {
     self = [super init];
     _indexSet = indexSet;
@@ -85,6 +85,15 @@ MCO_SYNTHESIZE_NSCODING
     indexSet = [[[MCOIndexSet alloc] init] autorelease];
     [indexSet addIndex:idx];
     return indexSet;
+}
+
+- (BOOL) isEqual:(id)other
+{
+    if (other == nil) {
+        return NO;
+    }
+    MCOIndexSet * otherIndexSet = other;
+    return _indexSet->isEqual(otherIndexSet->_indexSet);
 }
 
 - (NSString *) description

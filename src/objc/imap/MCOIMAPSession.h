@@ -20,9 +20,11 @@
 @class MCOIMAPFolderStatusOperation;
 @class MCOIMAPAppendMessageOperation;
 @class MCOIMAPCopyMessagesOperation;
+@class MCOIMAPMoveMessagesOperation;
 @class MCOIndexSet;
 @class MCOIMAPFetchMessagesOperation;
 @class MCOIMAPFetchContentOperation;
+@class MCOIMAPFetchContentToFileOperation;
 @class MCOIMAPFetchParsedContentOperation;
 @class MCOIMAPSearchOperation;
 @class MCOIMAPIdleOperation;
@@ -34,6 +36,7 @@
 @class MCOIMAPMessageRenderingOperation;
 @class MCOIMAPMessage;
 @class MCOIMAPIdentity;
+@class MCOIMAPCustomCommandOperation;
 
 /**
  This is the main IMAP class from which all operations are created
@@ -85,7 +88,7 @@
 @property (nonatomic, strong) MCOIMAPNamespace * defaultNamespace;
 
 /** The identity of the IMAP client. */
-@property (nonatomic, strong, readonly) MCOIMAPIdentity * clientIdentity;
+@property (nonatomic, copy) MCOIMAPIdentity * clientIdentity;
 
 /** The identity of the IMAP server. */
 @property (nonatomic, strong, readonly) MCOIMAPIdentity * serverIdentity;
@@ -98,6 +101,8 @@
  as a correct display name.
 */
 @property (nonatomic, copy, readonly) NSString * gmailUserDisplayName DEPRECATED_ATTRIBUTE;
+
+@property (nonatomic, assign, readonly, getter=isIdleEnabled) BOOL idleEnabled;
 
 /**
  When set to YES, the session is allowed open to open several connections to the same folder.
@@ -187,7 +192,7 @@
  Returns an operation that gets the list of subscribed folders.
 
     MCOIMAPFetchFoldersOperation * op = [session fetchSubscribedFoldersOperation];
-    [op start:^(NSError * error, NSArray * folders) {
+    [op start:^(NSError * __nullable error, NSArray * folders) {
         ...
     }];
  */
@@ -198,7 +203,7 @@
  Returns an operation that gets all folders
 
      MCOIMAPFetchFoldersOperation * op = [session fetchAllFoldersOperation];
-     [op start:^(NSError * error, NSArray *folders) {
+     [op start:^(NSError * __nullable error, NSArray *folders) {
           ...
      }];
 */
@@ -208,7 +213,7 @@
  Creates an operation for renaming a folder
 
      MCOIMAPOperation * op = [session renameFolderOperation:@"my documents" otherName:@"Documents"];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
         ...
      }];
 
@@ -219,7 +224,7 @@
  Create an operation for deleting a folder
 
      MCOIMAPOperation * op = [session deleteFolderOperation:@"holidays 2009"];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
           ...
      }]];
 */
@@ -229,7 +234,7 @@
  Returns an operation that creates a new folder
 
      MCOIMAPOperation * op = [session createFolderOperation:@"holidays 2013"];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
           ...
      }];
 */
@@ -239,7 +244,7 @@
  Returns an operation to subscribe to a folder.
 
      MCOIMAPOperation * op = [session createFolderOperation:@"holidays 2013"];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
        if (error != nil)
          return;
        MCOIMAPOperation * op = [session subscribeFolderOperation:@"holidays 2013"];
@@ -252,7 +257,7 @@
  Returns an operation to unsubscribe from a folder.
 
      MCOIMAPOperation * op = [session unsubscribeFolderOperation:@"holidays 2009"];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
        if (error != nil)
          return;
        MCOIMAPOperation * op = [session deleteFolderOperation:@"holidays 2009"]
@@ -265,7 +270,7 @@
  Returns an operation to expunge a folder.
 
      MCOIMAPOperation * op = [session expungeOperation:@"INBOX"];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
           ...
      }];
 */
@@ -277,7 +282,7 @@
  Returns an operation to add a message to a folder.
 
      MCOIMAPOperation * op = [session appendMessageOperationWithFolder:@"Sent Mail" messageData:rfc822Data flags:MCOMessageFlagNone];
-     [op start:^(NSError * error, uint32_t createdUID) {
+     [op start:^(NSError * __nullable error, uint32_t createdUID) {
        if (error == nil) {
          NSLog(@"created message with UID %lu", (unsigned long) createdUID);
        }
@@ -291,7 +296,7 @@
  Returns an operation to add a message with custom flags to a folder.
 
      MCOIMAPOperation * op = [session appendMessageOperationWithFolder:@"Sent Mail" messageData:rfc822Data flags:MCOMessageFlagNone customFlags:@[@"$CNS-Greeting-On"]];
-     [op start:^(NSError * error, uint32_t createdUID) {
+     [op start:^(NSError * __nullable error, uint32_t createdUID) {
        if (error == nil) {
          NSLog(@"created message with UID %lu", (unsigned long) createdUID);
        }
@@ -303,16 +308,48 @@
                                                         customFlags:(NSArray *)customFlags;
 
 /**
+ Returns an operation to add a message with custom flags to a folder.
+
+     MCOIMAPOperation * op = [session appendMessageOperationWithFolder:@"Sent Mail"
+                                                        contentsAtPath:rfc822DataFilename
+                                                                 flags:MCOMessageFlagNone
+                                                           customFlags:@[@"$CNS-Greeting-On"]];
+     [op start:^(NSError * __nullable error, uint32_t createdUID) {
+       if (error == nil) {
+         NSLog(@"created message with UID %lu", (unsigned long) createdUID);
+       }
+     }];
+ */
+- (MCOIMAPAppendMessageOperation *)appendMessageOperationWithFolder:(NSString *)folder
+                                                     contentsAtPath:(NSString *)path
+                                                              flags:(MCOMessageFlag)flags
+                                                        customFlags:(NSArray *)customFlags;
+
+/**
  Returns an operation to copy messages to a folder.
 
      MCOIMAPCopyMessagesOperation * op = [session copyMessagesOperationWithFolder:@"INBOX"
                                                                              uids:[MCIndexSet indexSetWithIndex:456]
                                                                        destFolder:@"Cocoa"];
-     [op start:^(NSError * error, NSDictionary * uidMapping) {
+     [op start:^(NSError * __nullable error, NSDictionary * uidMapping) {
           NSLog(@"copied to folder with UID mapping %@", uidMapping);
      }];
 */
 - (MCOIMAPCopyMessagesOperation *)copyMessagesOperationWithFolder:(NSString *)folder
+                                                             uids:(MCOIndexSet *)uids
+                                                       destFolder:(NSString *)destFolder NS_RETURNS_NOT_RETAINED;
+
+/**
+ Returns an operation to move messages to a folder.
+
+     MCOIMAPMoveMessagesOperation * op = [session moveMessagesOperationWithFolder:@"INBOX"
+                                                                             uids:[MCIndexSet indexSetWithIndex:456]
+                                                                       destFolder:@"Cocoa"];
+     [op start:^(NSError * __nullable error, NSDictionary * uidMapping) {
+          NSLog(@"moved to folder with UID mapping %@", uidMapping);
+     }];
+*/
+- (MCOIMAPMoveMessagesOperation *)moveMessagesOperationWithFolder:(NSString *)folder
                                                              uids:(MCOIndexSet *)uids
                                                        destFolder:(NSString *)destFolder NS_RETURNS_NOT_RETAINED;
 
@@ -325,7 +362,7 @@
                                                                uids:[MCOIndexSet indexSetWithIndex:456]
                                                                kind:MCOIMAPStoreFlagsRequestKindAdd
                                                               flags:MCOMessageFlagSeen];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
           ...
      }];
 */
@@ -343,7 +380,7 @@
                                                             numbers:[MCOIndexSet indexSetWithIndex:42]
                                                                kind:MCOIMAPStoreFlagsRequestKindAdd
                                                               flags:MCOMessageFlagSeen];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
           ...
      }];
  */
@@ -362,7 +399,7 @@
                                                                kind:MCOIMAPStoreFlagsRequestKindAdd
                                                               flags:MCOMessageFlagSeen
                                                         customFlags:@["$CNS-Greeting-On"]];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
          ...
      }];
  */
@@ -383,7 +420,7 @@
                                                                kind:MCOIMAPStoreFlagsRequestKindAdd
                                                               flags:MCOMessageFlagSeen
                                                         customFlags:@["$CNS-Greeting-On"]];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
          ...
      }];
  */
@@ -402,7 +439,7 @@
                                                              numbers:[MCOIndexSet indexSetWithIndex:42]
                                                                 kind:MCOIMAPStoreFlagsRequestKindAdd
                                                               labels:[NSArray arrayWithObject:@"Home"]];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
           ...
      }];
 */
@@ -420,7 +457,7 @@
                                                                 uids:[MCOIndexSet indexSetWithIndex:456]
                                                                 kind:MCOIMAPStoreFlagsRequestKindAdd
                                                               labels:[NSArray arrayWithObject:@"Home"]];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
           ...
      }];
 */
@@ -437,7 +474,7 @@
      MCOIMAPFetchMessagesOperation * op = [session fetchMessagesByUIDOperationWithFolder:@"INBOX"
                                                                              requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindStructure
                                                                                     uids:MCORangeMake(1, UINT64_MAX)];
-     [op start:^(NSError * error, NSArray * messages, MCOIndexSet * vanishedMessages) {
+     [op start:^(NSError * __nullable error, NSArray * messages, MCOIndexSet * vanishedMessages) {
         for(MCOIMAPMessage * msg in messages) {
           NSLog(@"%lu: %@", [msg uid], [msg header]);
         }
@@ -453,7 +490,7 @@
      MCOIMAPFetchMessagesOperation * op = [session fetchMessagesOperationWithFolder:@"INBOX"
                                                                         requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindStructure
                                                                                uids:MCORangeMake(1, UINT64_MAX)];
-     [op start:^(NSError * error, NSArray * messages, MCOIndexSet * vanishedMessages) {
+     [op start:^(NSError * __nullable error, NSArray * messages, MCOIndexSet * vanishedMessages) {
         for(MCOIMAPMessage * msg in messages) {
           NSLog(@"%lu: %@", [msg uid], [msg header]);
         }
@@ -496,7 +533,7 @@
                                                                    requestKind:MCOIMAPMessagesRequestKindUID
                                                                           uids:MCORangeMake(1, UINT64_MAX)
                                                                         modSeq:lastModSeq];
-     [op start:^(NSError * error, NSArray * messages, MCOIndexSet * vanishedMessages) {
+     [op start:^(NSError * __nullable error, NSArray * messages, MCOIndexSet * vanishedMessages) {
        NSLog(@"added or modified messages: %@", messages);
        NSLog(@"deleted messages: %@", vanishedMessages);
      }];
@@ -516,7 +553,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
                                                               requestKind:MCOIMAPMessagesRequestKindUID
                                                                      uids:MCORangeMake(1, UINT64_MAX)
                                                                    modSeq:lastModSeq];
-     [op start:^(NSError * error, NSArray * messages, MCOIndexSet * vanishedMessages) {
+     [op start:^(NSError * __nullable error, NSArray * messages, MCOIndexSet * vanishedMessages) {
        NSLog(@"added or modified messages: %@", messages);
        NSLog(@"deleted messages: %@", vanishedMessages);
      }];
@@ -534,7 +571,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  @param urgent is set to YES, an additional connection to the same folder might be opened to fetch the content.
 
      MCOIMAPFetchContentOperation * op = [session fetchMessageByUIDOperationWithFolder:@"INBOX" uid:456 urgent:NO];
-     [op start:^(NSError * error, NSData * messageData) {
+     [op start:^(NSError * __nullable error, NSData * messageData) {
         MCOMessageParser * parser = [MCOMessageParser messageParserWithData:messageData]
         ...
      }];
@@ -547,7 +584,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  Returns an operation to fetch the content of a message.
 
      MCOIMAPFetchContentOperation * op = [session fetchMessageByUIDOperationWithFolder:@"INBOX" uid:456];
-     [op start:^(NSError * error, NSData * messageData) {
+     [op start:^(NSError * __nullable error, NSData * messageData) {
         MCOMessageParser * parser = [MCOMessageParser messageParserWithData:messageData]
         ...
      }];
@@ -560,7 +597,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  @param urgent is set to YES, an additional connection to the same folder might be opened to fetch the content.
 
      MCOIMAPFetchContentOperation * op = [session fetchMessageOperationWithFolder:@"INBOX" uid:456 urgent:NO];
-     [op start:^(NSError * error, NSData * messageData) {
+     [op start:^(NSError * __nullable error, NSData * messageData) {
         MCOMessageParser * parser = [MCOMessageParser messageParserWithData:messageData]
         ...
      }];
@@ -573,7 +610,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  Returns an operation to fetch the content of a message.
 
      MCOIMAPFetchContentOperation * op = [session fetchMessageOperationWithFolder:@"INBOX" uid:456];
-     [op start:^(NSError * error, NSData * messageData) {
+     [op start:^(NSError * __nullable error, NSData * messageData) {
         MCOMessageParser * parser = [MCOMessageParser messageParserWithData:messageData]
         ...
      }];
@@ -586,7 +623,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  @param urgent is set to YES, an additional connection to the same folder might be opened to fetch the content.
 
      MCOIMAPFetchContentOperation * op = [session fetchMessageOperationWithFolder:@"INBOX" number:42 urgent:NO];
-     [op start:^(NSError * error, NSData * messageData) {
+     [op start:^(NSError * __nullable error, NSData * messageData) {
         MCOMessageParser * parser = [MCOMessageParser messageParserWithData:messageData]
         ...
      }];
@@ -599,7 +636,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  Returns an operation to fetch the content of a message, using IMAP sequence number.
 
      MCOIMAPFetchContentOperation * op = [session fetchMessageOperationWithFolder:@"INBOX" number:42];
-     [op start:^(NSError * error, NSData * messageData) {
+     [op start:^(NSError * __nullable error, NSData * messageData) {
         MCOMessageParser * parser = [MCOMessageParser messageParserWithData:messageData]
         ...
      }];
@@ -612,7 +649,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  @param urgent is set to YES, an additional connection to the same folder might be opened to fetch the content.
 
  MCOIMAPFetchParsedContentOperation * op = [session fetchParsedMessageOperationWithFolder:@"INBOX" uid:456 urgent:NO];
- [op start:^(NSError * error, MCOMessageParser * parser) {
+ [op start:^(NSError * __nullable error, MCOMessageParser * parser) {
 
  ...
  }];
@@ -625,7 +662,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  Returns an operation to fetch the parsed content of a message.
 
  MCOIMAPFetchParsedContentOperation * op = [session fetchParsedMessageOperationWithFolder:@"INBOX" uid:456];
- [op start:^(NSError * error, MCOMessageParser * parser) {
+ [op start:^(NSError * __nullable error, MCOMessageParser * parser) {
 
  ...
  }];
@@ -638,7 +675,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  @param urgent is set to YES, an additional connection to the same folder might be opened to fetch the content.
 
  MCOIMAPFetchParsedContentOperation * op = [session fetchParsedMessageOperationWithFolder:@"INBOX" number:42 urgent:NO];
- [op start:^(NSError * error, MCOMessageParser * parser) {
+ [op start:^(NSError * __nullable error, MCOMessageParser * parser) {
 
  ...
  }];
@@ -651,7 +688,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  Returns an operation to fetch the parsed content of a message, using IMAP sequence number.
 
  MCOIMAPFetchParsedContentOperation * op = [session fetchParsedMessageOperationWithFolder:@"INBOX" number:42];
- [op start:^(NSError * error, MCOMessageParser * parser) {
+ [op start:^(NSError * __nullable error, MCOMessageParser * parser) {
 
  ...
  }];
@@ -670,7 +707,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
                                                                                           partID:@"1.2"
                                                                                         encoding:MCOEncodingBase64
                                                                                           urgent:YES];
-     [op start:^(NSError * error, NSData * partData) {
+     [op start:^(NSError * __nullable error, NSData * partData) {
         ...
      }];
 */
@@ -681,6 +718,18 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
                                                                            urgent:(BOOL)urgent DEPRECATED_ATTRIBUTE;
 
 /**
+ Returns an operation for custom command.
+ @param command is the text representation of the command to be send.
+ 
+ 
+ MCOIMAPCustomCommandOperation * op = [session customCommandOperation:@"ACTIVATE SERVICE"];
+ [op start: ^(NSString * __nullable response, NSError * __nullable error) {
+   ...
+ }];
+ */
+- (MCOIMAPCustomCommandOperation *) customCommandOperation:(NSString *)command;
+
+/**
   Returns an operation to fetch an attachment.
 
   Example 1:
@@ -689,7 +738,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
                                                                                              uid:456
                                                                                           partID:@"1.2"
                                                                                         encoding:MCOEncodingBase64];
-     [op start:^(NSError * error, NSData * partData) {
+     [op start:^(NSError * __nullable error, NSData * partData) {
         ...
      }];
 
@@ -699,7 +748,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
                                                                                              uid:[message uid]
                                                                                           partID:[part partID]
                                                                                         encoding:[part encoding]];
-     [op start:^(NSError * error, NSData * partData) {
+     [op start:^(NSError * __nullable error, NSData * partData) {
         ...
      }];
 */
@@ -717,7 +766,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
                                                                                           partID:@"1.2"
                                                                                         encoding:MCOEncodingBase64
                                                                                           urgent:YES];
-     [op start:^(NSError * error, NSData * partData) {
+     [op start:^(NSError * __nullable error, NSData * partData) {
         ...
      }];
 */
@@ -736,7 +785,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
                                                                                         uid:456
                                                                                      partID:@"1.2"
                                                                                    encoding:MCOEncodingBase64];
-     [op start:^(NSError * error, NSData * partData) {
+     [op start:^(NSError * __nullable error, NSData * partData) {
         ...
      }];
 
@@ -746,7 +795,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
                                                                                         uid:[message uid]
                                                                                      partID:[part partID]
                                                                                    encoding:[part encoding]];
-     [op start:^(NSError * error, NSData * partData) {
+     [op start:^(NSError * __nullable error, NSData * partData) {
         ...
      }];
 */
@@ -764,7 +813,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
                                                                                           partID:@"1.2"
                                                                                         encoding:MCOEncodingBase64
                                                                                           urgent:YES];
-     [op start:^(NSError * error, NSData * partData) {
+     [op start:^(NSError * __nullable error, NSData * partData) {
         ...
      }];
 */
@@ -783,7 +832,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
                                                                                      number:42
                                                                                      partID:@"1.2"
                                                                                    encoding:MCOEncodingBase64];
-     [op start:^(NSError * error, NSData * partData) {
+     [op start:^(NSError * __nullable error, NSData * partData) {
         ...
      }];
 
@@ -793,7 +842,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
                                                                                      number:[message sequenceNumber]
                                                                                      partID:[part partID]
                                                                                    encoding:[part encoding]];
-     [op start:^(NSError * error, NSData * partData) {
+     [op start:^(NSError * __nullable error, NSData * partData) {
         ...
      }];
 */
@@ -801,6 +850,37 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
                                                                       number:(uint32_t)number
                                                                       partID:(NSString *)partID
                                                                     encoding:(MCOEncoding)encoding;
+
+/**
+ Returns an operation to fetch an attachment to a file.
+ @param  urgent is set to YES, an additional connection to the same folder might be opened to fetch the content.
+ Operation will be perform in a memory efficient manner.
+
+     MCOIMAPFetchContentToFileOperation * op = [session fetchMessageAttachmentToFileOperationWithFolder:@"INBOX"
+                                                                                                    uid:456
+                                                                                                 partID:@"1.2"
+                                                                                               encoding:MCOEncodingBase64
+                                                                                               filename:filename
+                                                                                                 urgent:YES];
+
+     // Optionally, explicitly enable chunked mode
+     [op setLoadingByChunksEnabled:YES];
+     [op setChunksSize:1024*1024];
+     // need in chunked mode for correct progress indication
+     [op setEstimatedSize:sizeOfAttachFromBodystructure];
+
+     [op start:^(NSError * __nullable error) {
+         ...
+     }];
+
+ */
+- (MCOIMAPFetchContentToFileOperation *) fetchMessageAttachmentToFileOperationWithFolder:(NSString *)folder
+                                                                                     uid:(uint32_t)uid
+                                                                                  partID:(NSString *)partID
+                                                                                encoding:(MCOEncoding)encoding
+                                                                                filename:(NSString *)filename
+                                                                                  urgent:(BOOL)urgent;
+
 
 /** @name General IMAP Actions */
 
@@ -810,7 +890,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
 
      MCOIMAPIdleOperation * op = [session idleOperationWithFolder:@"INBOX"
                                                      lastKnownUID:0];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
           ...
      }];
 */
@@ -821,13 +901,13 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  Returns an operation to fetch the list of namespaces.
 
      MCOIMAPFetchNamespaceOperation * op = [session fetchNamespaceOperation];
-     [op start:^(NSError * error, NSDictionary * namespaces) {
+     [op start:^(NSError * __nullable error, NSDictionary * namespaces) {
        if (error != nil)
          return;
        MCOIMAPNamespace * ns = [namespace objectForKey:MCOIMAPNamespacePersonal];
        NSString * path = [ns pathForComponents:[NSArray arrayWithObject:]];
        MCOIMAPOperation * createOp = [session createFolderOperation:foobar];
-       [createOp start:^(NSError * error) {
+       [createOp start:^(NSError * __nullable error) {
          ...
        }];
      }];
@@ -839,7 +919,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
 
      MCOIMAPIdentity * identity = [MCOIMAPIdentity identityWithVendor:@"Mozilla" name:@"Thunderbird" version:@"17.0.5"];
      MCOIMAPIdentityOperation * op = [session identityOperationWithClientIdentity:identity];
-     [op start:^(NSError * error, NSDictionary * serverIdentity) {
+     [op start:^(NSError * __nullable error, NSDictionary * serverIdentity) {
           ...
      }];
 */
@@ -850,7 +930,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  Useful for checking initial server capabilities.
 
  MCOIMAPOperation * op = [session connectOperation];
- [op start:^(NSError * error) {
+ [op start:^(NSError * __nullable error) {
  ...
  }];
  */
@@ -860,7 +940,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  Returns an operation that will perform a No-Op operation on the given IMAP server.
 
  MCOIMAPOperation * op = [session noopOperation];
- [op start:^(NSError * error) {
+ [op start:^(NSError * __nullable error) {
  ...
  }];
  */
@@ -870,7 +950,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  Returns an operation that will check whether the IMAP account is valid.
 
      MCOIMAPOperation * op = [session checkAccountOperation];
-     [op start:^(NSError * error) {
+     [op start:^(NSError * __nullable error) {
           ...
      }];
 */
@@ -883,7 +963,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
 
      canIdle = NO;
      MCOIMAPCapabilityOperation * op = [session capabilityOperation];
-     [op start:^(NSError * error, MCOIndexSet * capabilities) {
+     [op start:^(NSError * __nullable error, MCOIndexSet * capabilities) {
        if ([capabilities containsIndex:MCOIMAPCapabilityIdle]) {
          canIdle = YES;
        }
@@ -901,7 +981,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
      MCOIMAPSearchOperation * op = [session searchOperationWithFolder:@"INBOX"
                                                                  kind:MCOIMAPSearchKindFrom
                                                          searchString:@"laura"];
-     [op start:^(NSError * error, MCOIndexSet * searchResult) {
+     [op start:^(NSError * __nullable error, MCOIndexSet * searchResult) {
           ...
      }];
 */
@@ -915,7 +995,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
      MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchFrom:@"laura@etpan.org"]
      MCOIMAPSearchOperation * op = [session searchExpressionOperationWithFolder:@"INBOX"
                                                                      expression:expr];
-     [op start:^(NSError * error, MCOIndexSet * searchResult) {
+     [op start:^(NSError * __nullable error, MCOIndexSet * searchResult) {
           ...
      }];
 */
@@ -1000,7 +1080,7 @@ vanishedMessages will be set only for servers that support QRESYNC. See [RFC5162
  It will disconnect all the sockets created by the session.
 
     MCOIMAPOperation * op = [session disconnectOperation];
-    [op start:^(NSError * error) {
+    [op start:^(NSError * __nullable error) {
        ...
     }];
  */

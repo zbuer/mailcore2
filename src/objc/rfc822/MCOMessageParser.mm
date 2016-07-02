@@ -13,7 +13,6 @@
 
 #import "MCOHTMLRendererDelegate.h"
 #import "NSObject+MCO.h"
-#import "MCOAbstractMessage+Private.h"
 #import "MCOUtils.h"
 #import "MCOAbstractMessageRendererCallback.h"
 
@@ -37,7 +36,7 @@
     return [[[MCOMessageParser alloc] initWithData:data] autorelease];
 }
 
-- (id) initWithData:(NSData *)data
+- (instancetype) initWithData:(NSData *)data
 {
     mailcore::MessageParser * message = new mailcore::MessageParser((CFDataRef) data);
     self = [super initWithMCMessage:message];

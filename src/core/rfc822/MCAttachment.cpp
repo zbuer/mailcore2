@@ -112,10 +112,7 @@ String * Attachment::mimeTypeForFilename(String * filename)
     if (result != NULL)
         return result;
     
-    if (ext->isEqual(MCSTR("jpg"))) {
-        return MCSTR("image/jpeg");
-    }
-    else if (ext->isEqual(MCSTR("jpeg"))) {
+    if (ext->isEqual(MCSTR("jpeg")) || ext->isEqual(MCSTR("jpg"))) {
         return MCSTR("image/jpeg");
     }
     else if (ext->isEqual(MCSTR("png"))) {
@@ -129,6 +126,9 @@ String * Attachment::mimeTypeForFilename(String * filename)
     }
     else if (ext->isEqual(MCSTR("txt"))) {
         return MCSTR("text/plain");
+    }
+    else if (ext->isEqual(MCSTR("tiff")) || ext->isEqual(MCSTR("tif"))) {
+        return MCSTR("image/tiff");
     }
     return NULL;
 }
@@ -223,6 +223,7 @@ Attachment * Attachment::attachmentWithText(String * text)
 void Attachment::init()
 {
     mData = NULL;
+    mPartID = NULL;
     setMimeType(MCSTR("application/octet-stream"));
 }
 
@@ -234,11 +235,13 @@ Attachment::Attachment()
 Attachment::Attachment(Attachment * other) : AbstractPart(other)
 {
     init();
-    MC_SAFE_REPLACE_RETAIN(Data, mData, other->mData);
+    setData(other->data());
+    setPartID(other->partID());
 }
 
 Attachment::~Attachment()
 {
+    MC_SAFE_RELEASE(mPartID);
     MC_SAFE_RELEASE(mData);
 }
 
@@ -276,6 +279,16 @@ String * Attachment::description()
 Object * Attachment::copy()
 {
     return new Attachment(this);
+}
+
+void Attachment::setPartID(String * partID)
+{
+    MC_SAFE_REPLACE_COPY(String, mPartID, partID);
+}
+
+String * Attachment::partID()
+{
+    return mPartID;
 }
 
 void Attachment::setData(Data * data)
@@ -535,12 +548,12 @@ Attachment * Attachment::attachmentWithSingleMIME(struct mailmime * mime)
     mailmime_single_fields_init(&single_fields, mime->mm_mime_fields, mime->mm_content_type);
     
     encoding = encodingForMIMEEncoding(single_fields.fld_encoding, data->dt_encoding);
-    
+
     Data * mimeData;
     mimeData = Data::dataWithBytes(bytes, (unsigned int) length);
     mimeData = mimeData->decodedDataUsingEncoding(encoding);
     result->setData(mimeData);
-    
+
     str = get_content_type_str(mime->mm_content_type);
     result->setMimeType(String::stringWithUTF8Characters(str));
     free(str);
